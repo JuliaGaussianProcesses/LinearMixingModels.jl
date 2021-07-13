@@ -1,0 +1,13 @@
+name = "LinearMixingModels"
+uuid = "b8ce4b42-e81b-4a39-a84a-67f74a9a16dd"
+authors = ["Invenia Technical Computing Corporation"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
