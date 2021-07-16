@@ -3,6 +3,14 @@ uuid = "b8ce4b42-e81b-4a39-a84a-67f74a9a16dd"
 authors = ["Invenia Technical Computing Corporation"]
 version = "0.1.0"
 
+[deps]
+AbstractGPs = "99985d1d-32ba-4be9-9821-2ec096f28918"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
+KernelFunctions = "ec8451be-7e33-11e9-00cf-bbf324bd1392"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
 [compat]
 julia = "1"
 
