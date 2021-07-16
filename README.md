@@ -14,3 +14,7 @@ A package for implementing [Instantaneous Linear Mixing Models](https://arxiv.or
 ```julia
 julia> Pkg.add("LinearMixingModels")
 ```
+
+## API
+
+## Example
