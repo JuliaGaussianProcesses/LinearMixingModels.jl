@@ -10,18 +10,6 @@ processes, then
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
-function unpack(fx::FiniteGP{<:OILMM, <:MOInput, <:Diagonal{<:Real, <:Fill}})
-    fs = fx.f.f.fs
-    H = fx.f.H
-    D = fx.f.D
-    σ² = noise_var(fx.Σy)
-    x = fx.x.x
-
-    # Check that the number of outputs requested agrees with the model.
-    fx.x.out_dim == size(H, 1) || throw(error("out dim of x != out dim of f."))
-    return fs, H, D, σ², x
-end
-
 # Note that `cholesky` exploits the diagonal structure of `S`.
 function project(
     H::Orthogonal{T},
@@ -29,7 +17,6 @@ function project(
     σ²::T,
     D::Diagonal{T},
 ) where {T<:Real}
-    # Obtain U and S
     U, S = H.U, H.S
 
     # Compute the projection of the data.
@@ -41,13 +28,21 @@ function project(
     return Yproj, ΣT
 end
 
+function project(
+    H::Orthogonal{T},
+    Y::RowVecs{T},
+    σ²::T,
+    D::Diagonal{T},
+) where {T<:Real}
+    return project(H, ColVecs(Y.X'), σ², D)
+end
+
 # Compute the regularisation term in the log marginal likelihood. See e.g. appendix A.4.
 function regulariser(
     H::Orthogonal{T},
     σ²::T,
     Y::ColVecs{T},
 ) where {T<:Real}
-    # Obtain U and S
     U, S = H.U, H.S
 
     n = length(Y)
@@ -82,14 +77,14 @@ Follows the AbstractGPs.jl API.
 See also `rand_latent`.
 [1] - Bruinsma et al 2020.
 """
-function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
+# function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
 
-    # Sample from the latent process.
-    F = rand_latent(rng, fx)
+#     # Sample from the latent process.
+#     F = rand_latent(rng, fx)
 
-    # Generate iid noise and add to each output.
-    return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
-end
+#     # Generate iid noise and add to each output.
+#     return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
+# end
 
 """
     denoised_marginals(fx::FiniteGP{<:OILMM})
@@ -104,14 +99,17 @@ function denoised_marginals(fx::FiniteGP{<:OILMM})
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
+    # Obtain U and S
+    U, S = H.U, H.S
+
     # # Compute the latent -> observed transform.
     # H = U * cholesky(S).U
 
     # Compute the means.
-    M = H.U * H.S * M_latent
+    M = U * S * M_latent
 
     # Compute the variances.
-    V = abs2.(H.U * H.S) * V_latent
+    V = abs2.(U * S) * V_latent
 
     # Package everything into independent Normal distributions.
     return Normal.(vec(M'), sqrt.(vec(V')))
@@ -129,19 +127,18 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     # # Compute the latent -> observed transform.
     # H = U * cholesky(S).U
 
+    # Obtain U and S
+    U, S = H.U, H.S
+
     # Compute the means.
-    M = H.U * H.S * M_latent
+    M = U * S * M_latent
 
     # Compute the variances.
-    V = abs2.(H.U * H.S) * (V_latent .+ D.diag) .+ σ²
+    V = abs2.(U * S) * (V_latent .+ D.diag) .+ σ²
 
     # Package everything into independent Normal distributions.
     return vec(M'), vec(V')
 end
-
-AbstractGPs.mean(fx::FiniteGP{<:OILMM}) = mean_and_var(fx)[1]
-
-AbstractGPs.var(fx::FiniteGP{<:OILMM}) = mean_and_var(fx)[2]
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
