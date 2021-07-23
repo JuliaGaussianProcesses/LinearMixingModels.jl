@@ -14,8 +14,7 @@ const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 function project(
     H::Orthogonal{T},
     Y::ColVecs{T},
-    σ²::T,
-    D::Diagonal{T},
+    σ²::T
 ) where {T<:Real}
     U, S = H.U, H.S
 
@@ -23,7 +22,7 @@ function project(
     Yproj = cholesky(S).U \ U' * Y.X
 
     # Compute the projected noise, which is a matrix of size `size(Yproj)`.
-    ΣT = repeat(diag(σ² * inv(S) + D), 1, size(Yproj, 2))
+    ΣT = repeat(diag(σ² * inv(S)), 1, size(Yproj, 2))
 
     return Yproj, ΣT
 end
@@ -31,10 +30,9 @@ end
 function project(
     H::Orthogonal{T},
     Y::RowVecs{T},
-    σ²::T,
-    D::Diagonal{T},
+    σ²::T
 ) where {T<:Real}
-    return project(H, ColVecs(Y.X'), σ², D)
+    return project(H, ColVecs(Y.X'), σ²)
 end
 
 # Compute the regularisation term in the log marginal likelihood. See e.g. appendix A.4.
@@ -57,7 +55,7 @@ Sample from the latent (noiseless) process.
 See also `rand`.
 """
 function rand_latent(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
-    fs, H, D, σ², x = unpack(fx)
+    fs, H, σ², x = unpack(fx)
 
     # Obtain U and S
     U, S = H.U, H.S
@@ -92,7 +90,7 @@ Returns the marginal distribution over the OILMM without the IID noise component
 See also `marginals`.
 """
 function denoised_marginals(fx::FiniteGP{<:OILMM})
-    fs, H, D, σ², x = unpack(fx)
+    fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
     fs_marginals = reduce(hcat, map(f -> marginals(f(x)), fs))
@@ -134,7 +132,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     M = U * S * M_latent
 
     # Compute the variances.
-    V = abs2.(U * S) * (V_latent .+ D.diag) .+ σ²
+    V = abs2.(U * S) * (V_latent) .+ σ²
 
     # Package everything into independent Normal distributions.
     return vec(M'), vec(V')
@@ -142,11 +140,11 @@ end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
-    fs, H, D, σ², x = unpack(fx)
+    fs, H, σ², x = unpack(fx)
 
     # Projection step.
     Y = reshape_y(y, length(x))
-    Yproj, ΣT = project(H, Y, σ², D)
+    Yproj, ΣT = project(H, Y, σ²)
 
     # Latent process log marginal likelihood calculation.
     y_rows = collect(eachrow(Yproj))
@@ -158,15 +156,15 @@ end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.posterior(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
-    fs, H, D, σ², x = unpack(fx)
+    fs, H, σ², x = unpack(fx)
 
     # Projection step.
     Y = reshape_y(y, length(x))
-    Yproj, ΣT = project(H, Y, σ², D)
+    Yproj, ΣT = project(H, Y, σ²)
 
     # Condition each latent process on the projected observations.
     y_rows = collect(eachrow(Yproj))
     ΣT_rows = collect(eachrow(ΣT))
     fs_posterior = map((f, s, y) -> posterior(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
-    return ILMM(IndependentMOGP(fs_posterior), H, D)
+    return ILMM(IndependentMOGP(fs_posterior), H)
 end

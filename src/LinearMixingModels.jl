@@ -5,6 +5,7 @@ using Distributions
 using KernelFunctions
 using LinearAlgebra
 using Random
+using Statistics
 using FillArrays
 
 using AbstractGPs: AbstractGP, FiniteGP
