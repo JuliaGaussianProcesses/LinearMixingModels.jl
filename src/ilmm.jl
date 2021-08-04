@@ -17,20 +17,18 @@ struct ILMM{
     H::TH
 end
 
-# Σ := pxp heterogeneous noise deriving from latent processes
-function get_sigma(σ²)
-    Σ = σ²I
-end
+# Get the latent space multi-output GP belonging to the ILMM
+get_latent_gp(gp::ILMM) = gp.f
 
-function unpack(fx::FiniteGP{<:ILMM, <:MOInput, <:Diagonal{<:Real, <:Fill}})
-    fs = fx.f.f.fs
+function unpack(fx::FiniteGP{<:ILMM, <:MOInput})
+    f = fx.f.f
     H = fx.f.H
     σ² = noise_var(fx.Σy)
     x = fx.x.x
 
     # Check that the number of outputs requested agrees with the model.
     fx.x.out_dim == size(H, 1) || throw(error("out dim of x != out dim of f."))
-    return fs, H, σ², x
+    return f, H, σ², x
 end
 
 # Implement AbstractGPs API, for ILMM
@@ -77,27 +75,12 @@ function regulariser(fx, Y::ColVecs{<:Real})
     Ip = Matrix(I, p, p)
 
     # Wrong norm?
-    return -((p - m) * log(2π * σ²) + log(det(Σ) / det(ΣT)) +
-        norm((Ip - H * ΣT * H' * inv(Σ)) * Y.X)) / 2
+    return -((p - m) * log(2π) + log(det(Σ) / det(ΣT)) +
+        sum((y.X .- T'*y.X)' * inv(Σ) * (y.X .- T'*y.X))) / 2
 end
 
 function regulariser(fx, Y::RowVecs{<:Real})
     return regulariser(fx, ColVecs(Y.X'))
-end
-
-"""
-    rand_latent(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
-Sample from the latent (noiseless) process.
-See also `rand`.
-"""
-function rand_latent(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
-    fs, H, σ², x = unpack(fx)
-
-    # Generate from the latent processes. ####bug?
-    X = hcat(map((f, d) -> rand(rng, f(x, d)), fs)...)
-
-    # Transform latents into observed space.
-    return vec(H * X')
 end
 
 """
@@ -109,12 +92,13 @@ See also `rand_latent`.
 [1] - Bruinsma et al 2020.
 """
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
+    f_latent, H, σ², x = unpack(fx)
 
-    # Sample from the latent process.
-    F = rand_latent(rng, fx)
+    x_mo_input = MOInput(x, size(H,2))
 
+    return rand(rng, f_latent(x_mo_input))
     # Generate iid noise and add to each output.
-    return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
+    # return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
 end
 
 """
@@ -122,13 +106,13 @@ end
 Returns the marginal distribution over the OILMM without the IID noise components.
 See also `marginals`.
 """
-function denoised_marginals(fx::FiniteGP{<:ILMM})
-    fs, H, σ², x = unpack(fx)
+function marginals(fx::FiniteGP{<:ILMM})
+    f, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = reduce(hcat, map(f -> marginals(f(x)), fs))
-    M_latent = mean.(fs_marginals)'
-    V_latent = var.(fs_marginals)'
+    marginals = marginals(fx)
+    M_latent = mean(marginals)
+    V_latent = var(marginals)
 
     # Compute the means.
     M = H * M_latent
@@ -142,24 +126,11 @@ end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
-    fs, H, σ², x = unpack(fx)
+    f_latent, H, σ², x = unpack(fx)
 
-    # Compute the marginals over the independent latents.
-    fs_marginals = hcat(map(f -> marginals(f(x)), fs)...)
-    M_latent = mean.(fs_marginals)'
-    V_latent = var.(fs_marginals)'
+    x_mo_input = MOInput(x, size(H,2))
 
-    # # Compute the latent -> observed transform.
-    # H = U * cholesky(S).U
-
-    # Compute the means.
-    M = H * M_latent
-
-    # Compute the variances.
-    V = abs2.(H) * (V_latent) .+ σ²
-
-    # Package everything into independent Normal distributions.
-    return vec(M'), vec(V')
+    return mean_and_var(f_latent(x_mo_input))
 end
 
 AbstractGPs.mean(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[1]
@@ -170,31 +141,31 @@ AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
 function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     fs, H, σ², x = unpack(fx)
 
-    # Projection step.
+    # # Projection step.
     Y = reshape_y(y, length(x))
-    Yproj, ΣT = project(H, Y, σ²)
+    Ty, ΣT = project(H, Y, σ²)
+    Xproj, Yproj = prepare_isotopic_multi_output_data(x.x, Y)
+    ΣT = BlockDiagonal([ΣT for _ in 1:m])
 
-    # Latent process log marginal likelihood calculation.
-    y_rows = collect(eachrow(Yproj))
-    ΣT_rows = collect(eachrow(ΣT))
-    lmls_latents = map((f, s, y) -> logpdf(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
-
-    return regulariser(H, σ², Y) + sum(lmls_latents)
+    return logpdf(fx.f(Xproj, ΣT), Yproj) + regulariser(fx, Y)
 end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.posterior(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     f, H, σ², x = unpack(fx)
+    p, m = size(H)
 
     # # Projection step.
     Y = reshape_y(y, length(x))
-    Yproj, ΣT = project(H, Y, σ²)
+    Ty, ΣT = project(H, Y, σ²)
+    Xproj, Yproj = prepare_isotopic_multi_output_data(x.x, Y)
+    ΣT = BlockDiagonal([ΣT for _ in 1:m])
 
     # # Condition each latent process on the projected observations.
     # y_rows = collect(eachrow(Yproj))
     # ΣT_rows = collect(eachrow(ΣT))
-    f_posterior = posterior(f(x, ΣT), Y)
-    return ILMM(fs_posterior, H)
+    f_posterior = posterior(fx.f(Xproj, ΣT), Yproj)
+    return ILMM(f_posterior, H)
 end
 
 

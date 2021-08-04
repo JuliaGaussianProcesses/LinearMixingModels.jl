@@ -10,6 +10,17 @@ processes, then
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
+function unpack(fx::FiniteGP{<:OILMM, <:MOInput})
+    fs = fx.f.f.fs
+    H = fx.f.H
+    σ² = noise_var(fx.Σy)
+    x = fx.x.x
+
+    # Check that the number of outputs requested agrees with the model.
+    fx.x.out_dim == size(H, 1) || throw(error("out dim of x != out dim of f."))
+    return fs, H, σ², x
+end
+
 # Note that `cholesky` exploits the diagonal structure of `S`.
 function project(
     H::Orthogonal{T},
@@ -61,7 +72,7 @@ function rand_latent(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     U, S = H.U, H.S
 
     # Generate from the latent processes.
-    X = hcat(map((f, d) -> rand(rng, f(x, d)), fs, D.diag)...)
+    X = hcat(map(f -> rand(rng, f(x)), fs)...)
 
     # Transform latents into observed space.
     return vec(U * cholesky(S).U * X')
@@ -75,14 +86,14 @@ Follows the AbstractGPs.jl API.
 See also `rand_latent`.
 [1] - Bruinsma et al 2020.
 """
-# function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
+function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
 
-#     # Sample from the latent process.
-#     F = rand_latent(rng, fx)
+    # Sample from the latent process.
+    F = rand_latent(rng, fx)
 
-#     # Generate iid noise and add to each output.
-#     return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
-# end
+    # Generate iid noise and add to each output.
+    return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
+end
 
 """
     denoised_marginals(fx::FiniteGP{<:OILMM})
@@ -93,7 +104,7 @@ function denoised_marginals(fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = reduce(hcat, map(f -> marginals(f(x)), fs))
+    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs))
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -115,10 +126,10 @@ end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
-    fs, H, D, σ², x = unpack(fx)
+    fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = hcat(map(f -> marginals(f(x)), fs)...)
+    fs_marginals = hcat(map(f -> AbstractGPs.marginals(f(x)), fs)...)
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -136,6 +147,12 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
 
     # Package everything into independent Normal distributions.
     return vec(M'), vec(V')
+end
+
+AbstractGPs.cov(fx::FiniteGP{<:OILMM}) = Diagonal(var(fx))
+
+function AbstractGPs.mean_and_cov(fx::FiniteGP{<:OILMM})
+    return mean(fx), cov(fx)
 end
 
 # See AbstractGPs.jl API docs.

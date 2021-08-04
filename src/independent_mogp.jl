@@ -44,13 +44,18 @@ end
 # Marginals implementation
 function AbstractGPs.marginals(ft::FiniteGP{<:IndependentMOGP})
     finiteGPs = finite_gps(ft)
-    return reduce(hcat, map(marginals, finiteGPs))
+    return reduce(vcat, map(AbstractGPs.marginals, finiteGPs))
 end
 
 # Mean and Variance implementation
 function AbstractGPs.mean_and_var(ft::FiniteGP{<:IndependentMOGP})
-    ms = marginals(ft)
-    return map(mean, ms), map(var, ms)
+    ms = AbstractGPs.marginals(ft)
+    return reshape(map(mean, ms), length(ft.x)), map(var, ms)
+end
+
+# Mean and Covariance implementation
+function AbstractGPs.mean_and_cov(ft::FiniteGP{<:IndependentMOGP})
+    return mean(ft), cov(ft)
 end
 
 # Variance implementation
@@ -64,7 +69,7 @@ function Statistics.cov(
 )
     n = length(x)
     m = length(y)
-    Σ = zeros(n,m)
+    Σ = zeros(n, m)
     for i in 1:n
         for j in i:m
             if x[i][2]==y[j][2]
@@ -84,36 +89,37 @@ function Statistics.cov(ft::FiniteGP{<:IndependentMOGP}, gt::FiniteGP{<:Independ
 end
 
 # Mean implementation
-# function Statistics.mean(ft::FiniteGP{<:IndependentMOGP}, x::AbstractVector)
 AbstractGPs.mean(ft::FiniteGP{<:IndependentMOGP}) = mean_and_var(ft)[1]
 
 #Logpdf implementation
-function AbstractGPs.logpdf(ft::FiniteGP{<:IndependentMOGP}, y::AbstractVector{<:Union{Missing, Real}})
+function AbstractGPs.logpdf(ft::FiniteGP{<:IndependentMOGP}, y::AbstractVector)
     finiteGPs = finite_gps(ft)
-    return [logpdf(f, y) for f in finiteGPs]
+    ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
+    return sum([logpdf(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)])
 end
 
 # Random sampling implementation
 function AbstractGPs.rand(rng::AbstractRNG, ft::FiniteGP{<:IndependentMOGP})
-    return destructure(ft.x, rand(rng, ft))
+    finiteGPs = finite_gps(ft)
+    return vcat(map(fx -> rand(rng, fx), finiteGPs)...)
 end
 
 AbstractGPs.rand(ft::FiniteGP{<:IndependentMOGP}) = rand(Random.GLOBAL_RNG, ft)
 
 function AbstractGPs.rand(rng::AbstractRNG, ft::FiniteGP{<:IndependentMOGP}, N::Int)
-    finiteGPs = finite_gps(ft)
-    return [rand(rng, f) for f in finiteGPs]
+    return reduce(hcat, [rand(rng, ft) for _ in 1:N])
 end
 
 AbstractGPs.rand(ft::FiniteGP{<:IndependentMOGP}, N::Int) = rand(Random.GLOBAL_RNG, ft, N)
 
 # Posterior implementation for isotopic inputs, given diagonal Σy (OILMM)
 function AbstractGPs.posterior(
-    ft::FiniteGP{<:IndependentMOGP, <:AbstractVector, <:Diagonal},
+    ft::FiniteGP{<:IndependentMOGP},
     y::AbstractVector{<:Real}
 )
     finiteGPs = finite_gps(ft)
-    ind_posts = [posterior(fx, y) for fx in finiteGPs]
-    return ind_posts
+    ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
+    ind_posts = [posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
+    return IndependentMOGP(ind_posts)
 end
 

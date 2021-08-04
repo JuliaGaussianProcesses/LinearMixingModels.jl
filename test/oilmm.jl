@@ -24,11 +24,11 @@ end
         end
 
         # Specify equivalent OILMM.
-        fs = [GP(Matern52Kernel())]
+        fs = IndependentMOGP([GP(Matern52Kernel())])
         U = reshape([1.0], 1, 1)
         S = Diagonal([abs2(a)])
-        D = Diagonal([0.0])
-        f = OILMM(fs, U, S, D)
+        H = Orthogonal(U,S)
+        f = ILMM(fs, H)
         x_tr = MOInput(x_tr_raw, 1)
         x_te = MOInput(x_te_raw, 1)
         y_tr = rand(rng, f(x_tr, σ²))
@@ -72,8 +72,8 @@ end
         # Specify equivalent OILMM.
         U = collect(Diagonal(ones(P)))
         S = Diagonal(abs2.(as))
-        D = Diagonal(zeros(P))
-        f = OILMM([GP(Matern52Kernel()) for p in 1:P], U, S, D)
+        H = Orthogonal(U,S)
+        f = OILMM(IndependentMOGP([GP(Matern52Kernel()) for p in 1:P]), H)
         x_tr = MOInput(x_tr_raw, P)
         x_te = MOInput(x_te_raw, P)
         y_tr = rand(rng, f(x_tr, σ²))
