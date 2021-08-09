@@ -1,16 +1,15 @@
 """
-    OILMM(fs, H, D)
+    OILMM(fs, H)
 An Orthogonal Instantaneous Linear Mixing Model (OILMM) -- a distribution over vector-
 valued functions. Let `p` be the number of observed outputs, and `m` the number of latent
 processes, then
 # Arguments:
 - fs: a length-`m` vector of Gaussian process objects as an IndependentMOGP.
 - H: a `p x m` orthogonal matrix representing a fixed basis of our p-dim target: h_1,...,h_m
-- D: an `m x m` `Diagonal` matrix, variance of noise on each latent process. Positive entries.
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
-function unpack(fx::FiniteGP{<:OILMM, <:MOInput})
+function unpack(fx::FiniteGP{<:OILMM, <:isotopic_inputs, <:Diagonal{<:Real, <:Fill}})
     fs = fx.f.f.fs
     H = fx.f.H
     σ² = noise_var(fx.Σy)
@@ -61,11 +60,14 @@ function regulariser(
 end
 
 """
-    rand_latent(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
-Sample from the latent (noiseless) process.
-See also `rand`.
+    rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
+Sample from the OILMM, including the observation noise.
+Follows generative structure of model 2 from [1].
+Follows the AbstractGPs.jl API.
+See also `rand_latent`.
+[1] - Bruinsma et al 2020.
 """
-function rand_latent(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
+function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Obtain U and S
@@ -75,32 +77,18 @@ function rand_latent(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     X = hcat(map(f -> rand(rng, f(x)), fs)...)
 
     # Transform latents into observed space.
-    return vec(U * cholesky(S).U * X')
-end
-
-"""
-    rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
-Sample from the OILMM, including the observation noise.
-Follows generative structure of model 2 from [1].
-Follows the AbstractGPs.jl API.
-See also `rand_latent`.
-[1] - Bruinsma et al 2020.
-"""
-function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
-
-    # Sample from the latent process.
-    F = rand_latent(rng, fx)
+    F = vec(U * cholesky(S).U * X')
 
     # Generate iid noise and add to each output.
     return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
 end
 
 """
-    denoised_marginals(fx::FiniteGP{<:OILMM})
+    marginals(fx::FiniteGP{<:OILMM})
 Returns the marginal distribution over the OILMM without the IID noise components.
-See also `marginals`.
+# See AbstractGPs.jl API docs.
 """
-function denoised_marginals(fx::FiniteGP{<:OILMM})
+function AbstractGPs.marginals(fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
@@ -149,9 +137,10 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     return vec(M'), vec(V')
 end
 
-AbstractGPs.cov(fx::FiniteGP{<:OILMM}) = Diagonal(var(fx))
 
-function AbstractGPs.mean_and_cov(fx::FiniteGP{<:OILMM})
+AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
+
+function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
     return mean(fx), cov(fx)
 end
 
@@ -160,7 +149,7 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     fs, H, σ², x = unpack(fx)
 
     # Projection step.
-    Y = reshape_y(y, length(x))
+    Y = ColVecs(reshape_y(y, length(x)))
     Yproj, ΣT = project(H, Y, σ²)
 
     # Latent process log marginal likelihood calculation.
@@ -176,12 +165,12 @@ function AbstractGPs.posterior(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     fs, H, σ², x = unpack(fx)
 
     # Projection step.
-    Y = reshape_y(y, length(x))
+    Y = ColVecs(reshape_y(y, length(x)))
     Yproj, ΣT = project(H, Y, σ²)
 
     # Condition each latent process on the projected observations.
     y_rows = collect(eachrow(Yproj))
     ΣT_rows = collect(eachrow(ΣT))
-    fs_posterior = map((f, s, y) -> posterior(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
+    fs_posterior = map((f, s, y) -> AbstractGPs.posterior(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
     return ILMM(IndependentMOGP(fs_posterior), H)
 end

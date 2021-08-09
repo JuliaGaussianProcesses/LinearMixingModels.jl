@@ -1,6 +1,7 @@
 module LinearMixingModels
 
 using AbstractGPs
+using BlockDiagonals: BlockDiagonal
 using Distributions
 using KernelFunctions
 using LinearAlgebra

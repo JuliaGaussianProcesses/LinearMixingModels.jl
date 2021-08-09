@@ -1,14 +1,25 @@
 """
-    IndependentMOGP
+    IndependentMOGP(fs)
+
+A multi-output GP with independent outputs where output `i` is modelled by the
+single-output GP fs[i].
+
+# Arguments:
+- fs: a vector of `p` single-output GPs where `p` is the dimension of the output.
 """
 struct IndependentMOGP{Tg<:Vector{<:AbstractGPs.AbstractGP}} <: AbstractGPs.AbstractGP
     fs::Tg
 end
 
 """
-    independent_mogp
+    independent_mogp(fs)
 
-Returns an IndependentMOGP given a list of AbstractGPs.
+Returns an IndependentMOGP given a list of single output GPs `fs`.
+
+```jldoctest
+julia> independent_mogp([GP(SEKernel())]) == IndependentMOGP([GP(SEKernel())])
+true
+```
 """
 function independent_mogp(fs::Vector{<:AbstractGPs.AbstractGP})
     return IndependentMOGP(fs)
@@ -22,21 +33,23 @@ const isotopic_inputs = Union{
 }
 
 """
-    finite_gps()
+    finite_gps(fx)
 
-Returns a list of of the finite GPs for all latent processes, given isotopic inputs.
+Returns a list of of the finite GPs for all latent processes, given a finite
+IndependentMOGP and *isotopic inputs*.
 """
-function finite_gps(ft::FiniteGP{<:IndependentMOGP,<:isotopic_inputs})
-    return [f(ft.x.x, ft.Σy[1:length(ft.x.x),1:length(ft.x.x)]) for f in ft.f.fs]
+function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs})
+    return [f(fx.x.x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
 end
 
 """
-    finite_gps()
+    finite_gps(fx)
 
-Returns a list of of the finite GPs for all latent processes for some input x.
+Returns a list of of the finite GPs for all latent processes, given a finite
+IndependentMOGP, *isotopic inputs* and .
 """
-function finite_gps(ft::FiniteGP{<:IndependentMOGP,<:isotopic_inputs}, x::AbstractVector)
-    return [f(x, ft.Σy[1:length(ft.x.x),1:length(ft.x.x)]) for f in ft.f.fs]
+function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs}, x::AbstractVector)
+    return [f(x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
 end
 
 # Implement AbstractGPs API
@@ -88,17 +101,17 @@ function Statistics.cov(ft::FiniteGP{<:IndependentMOGP}, gt::FiniteGP{<:Independ
     return cov(ft.f, ft.x, gt.x)
 end
 
-# Mean implementation
+# See AbstractGPs.jl API docs.
 AbstractGPs.mean(ft::FiniteGP{<:IndependentMOGP}) = mean_and_var(ft)[1]
 
-#Logpdf implementation
+# See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(ft::FiniteGP{<:IndependentMOGP}, y::AbstractVector)
     finiteGPs = finite_gps(ft)
     ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
     return sum([logpdf(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)])
 end
 
-# Random sampling implementation
+# See AbstractGPs.jl API docs.
 function AbstractGPs.rand(rng::AbstractRNG, ft::FiniteGP{<:IndependentMOGP})
     finiteGPs = finite_gps(ft)
     return vcat(map(fx -> rand(rng, fx), finiteGPs)...)
@@ -112,14 +125,17 @@ end
 
 AbstractGPs.rand(ft::FiniteGP{<:IndependentMOGP}, N::Int) = rand(Random.GLOBAL_RNG, ft, N)
 
-# Posterior implementation for isotopic inputs, given diagonal Σy (OILMM)
+"""
+Posterior implementation for isotopic inputs, given diagonal Σy (OILMM).
+See AbstractGPs.jl API docs.
+"""
 function AbstractGPs.posterior(
     ft::FiniteGP{<:IndependentMOGP},
     y::AbstractVector{<:Real}
 )
     finiteGPs = finite_gps(ft)
     ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
-    ind_posts = [posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
+    ind_posts = [AbstractGPs.posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
     return IndependentMOGP(ind_posts)
 end
 
