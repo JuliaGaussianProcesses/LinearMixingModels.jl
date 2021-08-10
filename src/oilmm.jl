@@ -9,7 +9,11 @@ processes, then
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
-# Note that `cholesky` exploits the diagonal structure of `S`.
+"""
+    project(H, σ²)
+
+Computes the projection `T` and `ΣT` given the mixing matrix and noise.
+"""
 function project(
     H::Orthogonal{T},
     Y::ColVecs{T},
@@ -34,7 +38,12 @@ function project(
     return project(H, ColVecs(Y.X'), σ²)
 end
 
-# Compute the regularisation term in the log marginal likelihood. See e.g. appendix A.4.
+"""
+    regulariser(fx, y)
+
+Computes the regularisation term of the logpdf.
+See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
+"""
 function regulariser(
     H::Orthogonal{T},
     σ²::T,
@@ -127,11 +136,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
 end
 
 
-AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
-
-# function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
-#     return mean(fx), cov(fx)
-# end
+# AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})

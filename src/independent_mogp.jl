@@ -40,6 +40,7 @@ IndependentMOGP and *isotopic inputs*.
 """
 function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs})
     return [f(fx.x.x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
+    # return [f(fx.x.x, fx.Σy) for f in fx.f.fs]
 end
 
 """
@@ -48,34 +49,34 @@ end
 Returns a list of of the finite GPs for all latent processes, given a finite
 IndependentMOGP, *isotopic inputs* and .
 """
-function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs}, x::AbstractVector)
-    return [f(x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
-end
+# function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs}, x::AbstractVector)
+#     return [f(x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
+# end
 
 # Implement AbstractGPs API
 
-# Marginals implementation
+# See AbstractGPs.jl API docs.
 function AbstractGPs.marginals(ft::FiniteGP{<:IndependentMOGP})
     finiteGPs = finite_gps(ft)
     return reduce(vcat, map(AbstractGPs.marginals, finiteGPs))
 end
 
-# Mean and Variance implementation
+# See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(ft::FiniteGP{<:IndependentMOGP})
     ms = AbstractGPs.marginals(ft)
     return reshape(map(mean, ms), length(ft.x)), map(var, ms)
 end
 
-# Mean and Covariance implementation
+# See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_cov(ft::FiniteGP{<:IndependentMOGP})
     return mean(ft), cov(ft)
 end
 
-# Variance implementation
+# See AbstractGPs.jl API docs.
 AbstractGPs.var(ft::FiniteGP{<:IndependentMOGP}) = mean_and_var(ft)[2]
 
-# Cov implementation
-function Statistics.cov(
+# See AbstractGPs.jl API docs.
+function AbstractGPs.cov(
     f::IndependentMOGP,
     x::AbstractVector,
     y::AbstractVector
@@ -95,7 +96,7 @@ function Statistics.cov(
     return Σ
 end
 
-Statistics.cov(ft::FiniteGP{<:IndependentMOGP}) = cov(ft.f, ft.x, ft.x)
+AbstractGPs.cov(ft::FiniteGP{<:IndependentMOGP}) = cov(ft.f, ft.x, ft.x)
 
 function Statistics.cov(ft::FiniteGP{<:IndependentMOGP}, gt::FiniteGP{<:IndependentMOGP})
     return cov(ft.f, ft.x, gt.x)

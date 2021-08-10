@@ -70,6 +70,25 @@ true
 """
 reshape_y(y::AbstractVector{<:Real}, N::Int) = reshape(y, N, :)'
 
+"""
+    unpack(fx)
+
+Collect the relevant underlying fields of the Finite ILMM. This includes
+the latent space GP, the mixing matrix, the noise and the observations.
+
+```jldoctest
+julia> fs = independent_mogp([GP(Matern32Kernel())]);;
+
+julia> H = rand(2,1);
+
+julia> x = KernelFunctions.MOInputIsotopicByFeatures(ColVecs(rand(2,2), 2));
+
+julia> ilmmx = ILMM(fs, H)(x, 0.1);
+
+julia> (fs, H, 0.1, x.x) == lmm.unpack(ilmmx)
+true
+```
+"""
 function unpack(fx::FiniteGP{<:ILMM, <:isotopic_inputs, <:Diagonal{<:Real, <:Fill}})
     f = fx.f.f
     H = fx.f.H
@@ -81,10 +100,12 @@ function unpack(fx::FiniteGP{<:ILMM, <:isotopic_inputs, <:Diagonal{<:Real, <:Fil
     return f, H, σ², x
 end
 
-# Implement AbstractGPs API, for ILMM
-# posterior, rand, marginals, logpdf, mean, var, cov, mean_and_var,
+"""
+    project(H, σ²)
 
-function project(H::AbstractMatrix{Z}, σ²::Z,) where {Z<:Real}
+Computes the projection `T` and `ΣT` given the mixing matrix and noise.
+"""
+function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
 
     Σ = σ²*I
 
@@ -97,7 +118,12 @@ function project(H::AbstractMatrix{Z}, σ²::Z,) where {Z<:Real}
     return T, ΣT
 end
 
-# Compute the regularisation term in the log marginal likelihood. See e.g. appendix A.4.
+"""
+    regulariser(fx, y)
+
+Computes the regularisation term of the logpdf.
+See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
+"""
 function regulariser(fx, y::ColVecs{<:Real})
     fs, H, σ², x = unpack(fx)
     p, m = size(H)
@@ -106,14 +132,12 @@ function regulariser(fx, y::ColVecs{<:Real})
     Y = reshape_y(vec(y.X), length(x))
     T, ΣT = project(H, σ²)
 
-    # covariance?
-    Σ = σ²*Matrix(I,p,p)
+    Σ = σ² * Matrix(I,p,p)
 
     n = length(Y)
     p, m = size(H)
     Ip = Matrix(I, p, p)
 
-    # Wrong norm?
     return -((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT)) +
         sum((Y .- H*T*Y)' * (1/σ²) * (Y .- H*T*Y))) / 2
 end
@@ -124,6 +148,7 @@ end
 
 """
     rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
+
 Sample from the ILMM, including the observation noise.
 Follows generative structure of model 2 from [1].
 Follows the AbstractGPs.jl API.
@@ -144,8 +169,22 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM}, N::Int)
     return reduce(hcat, [rand(rng, fx) for _ in 1:N])
 end
 
+function Distributions._rand!(
+    rng::AbstractRNG,
+    fx::FiniteGP{<:ILMM},
+    y::AbstractVecOrMat{<:Real}
+)
+    N = size(y, 2)
+    if N == 1
+        y .= AbstractGPs.rand(rng, fx)
+    else
+        y .= AbstractGPs.rand(rng, fx, N)
+    end
+end
+
 """
     marginals(fx::FiniteGP{<:ILMM})
+
 Returns the marginal distribution over the ILMM without the IID noise components.
 See AbstractGPs.jl API docs.
 """
@@ -179,8 +218,8 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
 
     latent_mean, latent_var = mean_and_var(f_latent(x_mo_input))
 
-    M = vec((H * reshape(latent_mean, length(fx.x.x), :))')
-    V = vec((abs2.(H) * reshape(latent_var, length(fx.x.x), :))')
+    M = vec((H * reshape(latent_mean, :, length(fx.x.x)))')
+    V = vec((abs2.(H) * reshape(latent_var, :, length(fx.x.x)))')
     return M, V
 end
 
@@ -206,7 +245,7 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     T, ΣT = project(H, σ²)
     Ty = ColVecs(T*Y)
     Xproj, Yproj = prepare_isotopic_multi_output_data(x, Ty)
-    ΣT = BlockDiagonal([ΣT for _ in 1:m])
+    ΣT = BlockDiagonal([ΣT for _ in 1:length(x)])
 
     return AbstractGPs.logpdf(f(Xproj, ΣT), Yproj) + regulariser(fx, ColVecs(Y))
 end
@@ -221,7 +260,7 @@ function AbstractGPs.posterior(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     T, ΣT = project(H, σ²)
     Ty = ColVecs(T*Y)
     Xproj, Yproj = prepare_isotopic_multi_output_data(x, Ty)
-    ΣT = BlockDiagonal([ΣT for _ in 1:m])
+    ΣT = BlockDiagonal([ΣT for _ in 1:length(x)])
 
     f_posterior = AbstractGPs.posterior(f(Xproj, ΣT), Yproj)
     return ILMM(f_posterior, H)
