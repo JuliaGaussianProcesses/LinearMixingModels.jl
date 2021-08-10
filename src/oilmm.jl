@@ -9,17 +9,6 @@ processes, then
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
-function unpack(fx::FiniteGP{<:OILMM, <:isotopic_inputs, <:Diagonal{<:Real, <:Fill}})
-    fs = fx.f.f.fs
-    H = fx.f.H
-    σ² = noise_var(fx.Σy)
-    x = fx.x.x
-
-    # Check that the number of outputs requested agrees with the model.
-    fx.x.out_dim == size(H, 1) || throw(error("out dim of x != out dim of f."))
-    return fs, H, σ², x
-end
-
 # Note that `cholesky` exploits the diagonal structure of `S`.
 function project(
     H::Orthogonal{T},
@@ -74,7 +63,7 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     U, S = H.U, H.S
 
     # Generate from the latent processes.
-    X = hcat(map(f -> rand(rng, f(x)), fs)...)
+    X = hcat(map(f -> rand(rng, f(x)), fs.fs)...)
 
     # Transform latents into observed space.
     F = vec(U * cholesky(S).U * X')
@@ -92,7 +81,7 @@ function AbstractGPs.marginals(fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs))
+    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs.fs))
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -117,7 +106,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = hcat(map(f -> AbstractGPs.marginals(f(x)), fs)...)
+    fs_marginals = hcat(map(f -> AbstractGPs.marginals(f(x)), fs.fs)...)
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -140,9 +129,9 @@ end
 
 AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
 
-function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
-    return mean(fx), cov(fx)
-end
+# function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
+#     return mean(fx), cov(fx)
+# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
@@ -155,7 +144,7 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     # Latent process log marginal likelihood calculation.
     y_rows = collect(eachrow(Yproj))
     ΣT_rows = collect(eachrow(ΣT))
-    lmls_latents = map((f, s, y) -> logpdf(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
+    lmls_latents = map((f, s, y) -> logpdf(f(x, collect(s)), collect(y)), fs.fs, ΣT_rows, y_rows)
 
     return regulariser(H, σ², Y) + sum(lmls_latents)
 end
@@ -171,6 +160,6 @@ function AbstractGPs.posterior(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     # Condition each latent process on the projected observations.
     y_rows = collect(eachrow(Yproj))
     ΣT_rows = collect(eachrow(ΣT))
-    fs_posterior = map((f, s, y) -> AbstractGPs.posterior(f(x, collect(s)), collect(y)), fs, ΣT_rows, y_rows)
+    fs_posterior = map((f, s, y) -> AbstractGPs.posterior(f(x, collect(s)), collect(y)), fs.fs, ΣT_rows, y_rows)
     return ILMM(IndependentMOGP(fs_posterior), H)
 end

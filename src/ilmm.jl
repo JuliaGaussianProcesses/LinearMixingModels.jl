@@ -16,6 +16,11 @@ struct ILMM{
     H::TH
 end
 
+const isotopic_inputs = Union{
+    KernelFunctions.MOInputIsotopicByFeatures,
+    KernelFunctions.MOInputIsotopicByOutputs
+}
+
 """
     get_latent_gp(f::ILMM)
 
@@ -92,10 +97,6 @@ function project(H::AbstractMatrix{Z}, σ²::Z,) where {Z<:Real}
     return T, ΣT
 end
 
-function project(H::AbstractMatrix{Z}, σ²::Z,) where {Z<:Real}
-    return project(H, σ²)
-end
-
 # Compute the regularisation term in the log marginal likelihood. See e.g. appendix A.4.
 function regulariser(fx, y::ColVecs{<:Real})
     fs, H, σ², x = unpack(fx)
@@ -113,8 +114,8 @@ function regulariser(fx, y::ColVecs{<:Real})
     Ip = Matrix(I, p, p)
 
     # Wrong norm?
-    return -((p - m) * log(2π) + log(det(Σ) / det(ΣT)) +
-        sum((Y .- H*T*Y)' * ((1/σ²)*Matrix(I,p,p)) * (Y .- H*T*Y))) / 2
+    return -((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT)) +
+        sum((Y .- H*T*Y)' * (1/σ²) * (Y .- H*T*Y))) / 2
 end
 
 function regulariser(fx, Y::RowVecs{<:Real})
@@ -131,10 +132,10 @@ Follows the AbstractGPs.jl API.
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
     f_latent, H, σ², x = unpack(fx)
 
-    x_mo_input = MOInput(x, size(H,2))
+    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
 
     latent_rand =  rand(rng, f_latent(x_mo_input))
-    return vec(H * reshape(latent_rand, length(fx.x.x), :))
+    return vec(H * reshape(latent_rand, :, length(fx.x.x)))
 end
 
 AbstractGPs.rand(fx::FiniteGP{<:ILMM}) = rand(Random.GLOBAL_RNG, fx)

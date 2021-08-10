@@ -20,4 +20,6 @@ export ILMM
 export IndependentMOGP, independent_mogp
 export Orthogonal, OILMM
 
+export get_latent_gp
+
 end
