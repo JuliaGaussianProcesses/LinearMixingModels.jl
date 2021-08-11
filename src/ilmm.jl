@@ -231,9 +231,9 @@ AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
 
 # AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
 
-function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
-    return mean(fx), cov(fx)
-end
+# function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
+#     return mean(fx), cov(fx)
+# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})

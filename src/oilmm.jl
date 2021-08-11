@@ -22,7 +22,7 @@ function project(
     U, S = H.U, H.S
 
     # Compute the projection of the data.
-    Yproj = cholesky(S).U \ U' * Y.X
+    Yproj = sqrt(S) \ U' * Y.X
 
     # Compute the projected noise, which is a matrix of size `size(Yproj)`.
     ΣT = repeat(diag(σ² * inv(S)), 1, size(Yproj, 2))
@@ -53,7 +53,7 @@ function regulariser(
 
     n = length(Y)
     p, m = size(U)
-    return -(n * (logdet(cholesky(S)) + (p - m) * log(2π * σ²)) +
+    return -(n * (logdet(S) + (p - m) * log(2π * σ²)) +
         sum(abs2, (I - U * U') * Y.X) / σ²) / 2
 end
 
@@ -75,7 +75,7 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     X = hcat(map(f -> rand(rng, f(x)), fs.fs)...)
 
     # Transform latents into observed space.
-    F = vec(U * cholesky(S).U * X')
+    F = vec(U * sqrt(S) * X')
 
     # Generate iid noise and add to each output.
     return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
@@ -101,10 +101,10 @@ function AbstractGPs.marginals(fx::FiniteGP{<:OILMM})
     # H = U * cholesky(S).U
 
     # Compute the means.
-    M = U * S * M_latent
+    M = U * sqrt(S) * M_latent
 
     # Compute the variances.
-    V = abs2.(U * S) * V_latent
+    V = abs2.(U * sqrt(S)) * V_latent
 
     # Package everything into independent Normal distributions.
     return Normal.(vec(M'), sqrt.(vec(V')))
@@ -126,10 +126,10 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     U, S = H.U, H.S
 
     # Compute the means.
-    M = U * S * M_latent
+    M = U * sqrt(S) * M_latent
 
     # Compute the variances.
-    V = abs2.(U * S) * (V_latent) .+ σ²
+    V = abs2.(U * sqrt(S)) * (V_latent) .+ σ²
 
     # Package everything into independent Normal distributions.
     return vec(M'), vec(V')
