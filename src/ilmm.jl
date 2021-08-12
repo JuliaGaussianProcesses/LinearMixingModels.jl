@@ -119,34 +119,6 @@ function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
 end
 
 """
-    regulariser(fx, y)
-
-Computes the regularisation term of the logpdf.
-See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
-"""
-function regulariser(fx, y::ColVecs{<:Real})
-    fs, H, σ², x = unpack(fx)
-    p, m = size(H)
-
-    # Projection step.
-    Y = reshape_y(vec(y.X), length(x))
-    T, ΣT = project(H, σ²)
-
-    Σ = σ² * Matrix(I,p,p)
-
-    n = length(Y)
-    p, m = size(H)
-    Ip = Matrix(I, p, p)
-
-    return -((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT)) +
-        sum((Y .- H*T*Y)' * (1/σ²) * (Y .- H*T*Y))) / 2
-end
-
-function regulariser(fx, Y::RowVecs{<:Real})
-    return regulariser(fx, ColVecs(Y.X'))
-end
-
-"""
     rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
 
 Sample from the ILMM, including the observation noise.
@@ -188,39 +160,29 @@ end
 Returns the marginal distribution over the ILMM without the IID noise components.
 See AbstractGPs.jl API docs.
 """
-function marginals(fx::FiniteGP{<:ILMM})
+function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
 
-    f_latent, H, σ², x = unpack(fx)
-
-    x_mo_input = MOInput(x, size(H,2))
-
-    # Compute the marginals over the independent latents.
-    marginals = marginals(f_latent(x_mo_input))
-    M_latent = mean(marginals)
-    V_latent = var(marginals)
-
-    # Compute the means.
-    M = H * M_latent
+    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
 
     # Compute the variances.
-    V = abs2.(H) * V_latent
+    M, V = mean_and_var(fx)
 
     # Package everything into independent Normal distributions.
-    return Normal.(vec(M'), sqrt.(vec(V')))
+    return Normal.(M, sqrt.(V))
 end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
-    f_latent, H, σ², x = unpack(fx)
+    f, H, σ², x = unpack(fx)
 
-    x_mo_input = MOInput(x, size(H,2))
+    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
 
-    latent_mean, latent_var = mean_and_var(f_latent(x_mo_input))
+    latent_mean, latent_var = mean_and_var(f(x_mo_input))
 
-    M = vec((H * reshape(latent_mean, :, length(fx.x.x)))')
-    V = vec((abs2.(H) * reshape(latent_var, :, length(fx.x.x)))')
-    return M, V
+    M = (H * reshape(latent_mean, :, length(x)))'
+    V = (abs2.(H) * reshape(latent_var, :, length(x)))' .+ σ²
+    return collect(vec(M)), collect(vec(V))
 end
 
 # See AbstractGPs.jl API docs.
@@ -228,12 +190,6 @@ AbstractGPs.mean(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[1]
 
 # See AbstractGPs.jl API docs.
 AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
-
-# AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = Diagonal(var(fx))
-
-# function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
-#     return mean(fx), cov(fx)
-# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
@@ -248,6 +204,28 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     ΣT = BlockDiagonal([ΣT for _ in 1:length(x)])
 
     return AbstractGPs.logpdf(f(Xproj, ΣT), Yproj) + regulariser(fx, ColVecs(Y))
+end
+
+"""
+    regulariser(fx, y)
+
+Computes the regularisation term of the logpdf.
+See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
+"""
+function regulariser(fx, y::ColVecs{<:Real})
+    fs, H, σ², x = unpack(fx)
+    p, m = size(H)
+
+    # Projection step.
+    Y = reshape_y(vec(y.X), length(x))
+    T, ΣT = project(H, σ²)
+
+    return -((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT)) +
+        sum((Y .- H*T*Y)' * (1/σ²) * (Y .- H*T*Y))) / 2
+end
+
+function regulariser(fx, Y::RowVecs{<:Real})
+    return regulariser(fx, ColVecs(Y.X'))
 end
 
 # See AbstractGPs.jl API docs.

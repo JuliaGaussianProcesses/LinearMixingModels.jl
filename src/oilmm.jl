@@ -39,25 +39,6 @@ function project(
 end
 
 """
-    regulariser(fx, y)
-
-Computes the regularisation term of the logpdf.
-See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
-"""
-function regulariser(
-    H::Orthogonal{T},
-    σ²::T,
-    Y::ColVecs{T},
-) where {T<:Real}
-    U, S = H.U, H.S
-
-    n = length(Y)
-    p, m = size(U)
-    return -(n * (logdet(S) + (p - m) * log(2π * σ²)) +
-        sum(abs2, (I - U * U') * Y.X) / σ²) / 2
-end
-
-"""
     rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
 Sample from the OILMM, including the observation noise.
 Follows generative structure of model 2 from [1].
@@ -86,29 +67,22 @@ end
 Returns the marginal distribution over the OILMM without the IID noise components.
 # See AbstractGPs.jl API docs.
 """
-function AbstractGPs.marginals(fx::FiniteGP{<:OILMM})
-    fs, H, σ², x = unpack(fx)
+# function AbstractGPs.marginals(fx::FiniteGP{<:OILMM})
+#     fs, H, σ², x = unpack(fx)
 
-    # Compute the marginals over the independent latents.
-    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs.fs))
-    M_latent = mean.(fs_marginals)'
-    V_latent = var.(fs_marginals)'
+#     # Compute the marginals over the independent latents.
+#     fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs.fs))
+#     M_latent = mean.(fs_marginals)'
+#     V_latent = var.(fs_marginals)'
 
-    # Obtain U and S
-    U, S = H.U, H.S
+#     # Obtain U and S
+#     U, S = H.U, H.S
 
-    # # Compute the latent -> observed transform.
-    # H = U * cholesky(S).U
+#     M, V = mean_and_var(fx)
 
-    # Compute the means.
-    M = U * sqrt(S) * M_latent
-
-    # Compute the variances.
-    V = abs2.(U * sqrt(S)) * V_latent
-
-    # Package everything into independent Normal distributions.
-    return Normal.(vec(M'), sqrt.(vec(V')))
-end
+#     # Package everything into independent Normal distributions.
+#     return Normal.(M, sqrt.(V))
+# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
@@ -132,7 +106,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     V = abs2.(U * sqrt(S)) * (V_latent) .+ σ²
 
     # Package everything into independent Normal distributions.
-    return vec(M'), vec(V')
+    return collect(vec(M')), collect(vec(V'))
 end
 
 
@@ -151,7 +125,26 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     ΣT_rows = collect(eachrow(ΣT))
     lmls_latents = map((f, s, y) -> logpdf(f(x, collect(s)), collect(y)), fs.fs, ΣT_rows, y_rows)
 
-    return regulariser(H, σ², Y) + sum(lmls_latents)
+    return sum(lmls_latents) + regulariser(H, σ², Y)
+end
+
+"""
+    regulariser(fx, y)
+
+Computes the regularisation term of the logpdf.
+See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
+"""
+function regulariser(
+    H::Orthogonal{T},
+    σ²::T,
+    Y::ColVecs{T},
+) where {T<:Real}
+    U, S = H.U, H.S
+
+    n = length(Y)
+    p, m = size(U)
+    return -(n * (logdet(S) + (p - m) * log(2π * σ²)) +
+        sum(abs2, (I - U * U') * Y.X) / σ²) / 2
 end
 
 # See AbstractGPs.jl API docs.
