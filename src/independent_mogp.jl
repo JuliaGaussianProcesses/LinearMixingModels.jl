@@ -29,7 +29,7 @@ end
 A constant to represent all isotopic input types.
 """
 const isotopic_inputs = Union{
-    KernelFunctions.MOInputIsotopicByFeatures, KernelFunctions.MOInputIsotopicByOutputs
+    MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
 }
 
 """

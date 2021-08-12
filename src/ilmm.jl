@@ -17,8 +17,8 @@ struct ILMM{
 end
 
 const isotopic_inputs = Union{
-    KernelFunctions.MOInputIsotopicByFeatures,
-    KernelFunctions.MOInputIsotopicByOutputs
+    MOInputIsotopicByFeatures,
+    MOInputIsotopicByOutputs
 }
 
 """
@@ -81,7 +81,7 @@ julia> fs = independent_mogp([GP(Matern32Kernel())]);;
 
 julia> H = rand(2,1);
 
-julia> x = KernelFunctions.MOInputIsotopicByFeatures(ColVecs(rand(2,2), 2));
+julia> x = MOInputIsotopicByFeatures(ColVecs(rand(2,2), 2));
 
 julia> ilmmx = ILMM(fs, H)(x, 0.1);
 
@@ -129,7 +129,7 @@ Follows the AbstractGPs.jl API.
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
     f_latent, H, σ², x = unpack(fx)
 
-    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
 
     latent_rand =  rand(rng, f_latent(x_mo_input))
     return vec(H * reshape(latent_rand, :, length(fx.x.x)))
@@ -163,7 +163,7 @@ See AbstractGPs.jl API docs.
 function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
 
-    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
 
     # Compute the variances.
     M, V = mean_and_var(fx)
@@ -176,7 +176,7 @@ end
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
 
-    x_mo_input = KernelFunctions.MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
 
     latent_mean, latent_var = mean_and_var(f(x_mo_input))
 
