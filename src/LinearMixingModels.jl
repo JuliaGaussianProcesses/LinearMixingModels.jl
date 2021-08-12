@@ -2,6 +2,7 @@ module LinearMixingModels
 
 using AbstractGPs
 using BlockDiagonals: BlockDiagonal
+using ChainRulesCore: @non_differentiable
 using Distributions
 using KernelFunctions
 using LinearAlgebra
@@ -10,6 +11,7 @@ using Statistics
 using FillArrays
 
 using AbstractGPs: AbstractGP, FiniteGP
+using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
 
 include("independent_mogp.jl")
 include("orthogonal_matrix.jl")
