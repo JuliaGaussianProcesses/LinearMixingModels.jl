@@ -106,7 +106,6 @@ end
 Computes the projection `T` and `ΣT` given the mixing matrix and noise.
 """
 function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
-
     Σ = σ²*I
 
     # Compute the projected noise, which is a matrix of size `size(Yproj)`.
@@ -127,12 +126,12 @@ Follows the AbstractGPs.jl API.
 [1] - Bruinsma et al 2020.
 """
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
-    f_latent, H, σ², x = unpack(fx)
+    f, H, σ², x = unpack(fx)
 
     x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
 
-    latent_rand =  rand(rng, f_latent(x_mo_input))
-    return vec(H * reshape(latent_rand, :, length(fx.x.x)))
+    latent_rand =  rand(rng, f(x_mo_input))
+    return vec(H * reshape(latent_rand, :, length(x)))
 end
 
 AbstractGPs.rand(fx::FiniteGP{<:ILMM}) = rand(Random.GLOBAL_RNG, fx)
@@ -175,13 +174,17 @@ end
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
+    p, m = size(H)
 
-    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByFeatures(x, size(H, 2))
 
+    # wrong, needs fixing
     latent_mean, latent_var = mean_and_var(f(x_mo_input))
 
     M = (H * reshape(latent_mean, :, length(x)))'
+    # Compute the variances.
     V = (abs2.(H) * reshape(latent_var, :, length(x)))' .+ σ²
+
     return collect(vec(M)), collect(vec(V))
 end
 

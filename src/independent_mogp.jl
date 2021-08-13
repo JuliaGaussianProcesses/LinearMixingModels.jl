@@ -38,7 +38,7 @@ const isotopic_inputs = Union{
 Returns a list of of the finite GPs for all latent processes, given a finite
 IndependentMOGP and *isotopic inputs*.
 """
-function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:isotopic_inputs})
+function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:isotopic_inputs})
     return [f(fx.x.x, fx.Σy[1:length(fx.x.x),1:length(fx.x.x)]) for f in fx.f.fs]
     # return [f(fx.x.x, fx.Σy) for f in fx.f.fs]
 end
@@ -108,7 +108,7 @@ AbstractGPs.mean(ft::FiniteGP{<:IndependentMOGP}) = mean_and_var(ft)[1]
 # See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(ft::FiniteGP{<:IndependentMOGP}, y::AbstractVector)
     finiteGPs = finite_gps(ft)
-    ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
+    ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))
     return sum([logpdf(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)])
 end
 
