@@ -1,6 +1,7 @@
 using AbstractGPs
 using Distributions
-using FiniteDifferences
+# using FiniteDifferences
+using KernelFunctions
 using LinearAlgebra
 # using LinearMixingModels
 using Random
@@ -9,6 +10,7 @@ using Test
 using Zygote
 
 using AbstractGPs: AbstractGP, FiniteGP
+using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
 # using LinearMixingModxels: marginals, rand
 using Stheno: GaussianProcessProbabilisticProgramme
 
@@ -16,8 +18,8 @@ using Stheno: GaussianProcessProbabilisticProgramme
 # include("test_util.jl")
 
 @testset "LinearMixingModels.jl" begin
-    include("oilmm.jl")
-    include("ilmm.jl")
-    include("independent_mogp.jl")
+    # include("oilmm.jl")
+    # include("ilmm.jl")
+    # include("independent_mogp.jl")
     include("orthogonal_matrix.jl")
 end
