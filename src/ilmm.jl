@@ -61,10 +61,10 @@ Reshape `y` in to an adjoint Matrix of dimension (length(y)/N, N)`
 ```jldoctest
 julia> y = rand(16);
 
-julia> size(reshape_y(y,8)) == (2, 8)
+julia> size(LinearMixingModels.reshape_y(y,8)) == (2, 8)
 true
 
-julia> size(reshape_y(y,2)) == (8, 2)
+julia> size(LinearMixingModels.reshape_y(y,2)) == (8, 2)
 true
 ```
 """
@@ -85,7 +85,7 @@ julia> x = MOInputIsotopicByFeatures(ColVecs(rand(2,2), 2));
 
 julia> ilmmx = ILMM(fs, H)(x, 0.1);
 
-julia> (fs, H, 0.1, x.x) == lmm.unpack(ilmmx)
+julia> (fs, H, 0.1, x.x) == LinearMixingModels.unpack(ilmmx)
 true
 ```
 """
@@ -218,13 +218,14 @@ See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
 function regulariser(fx, y::ColVecs{<:Real})
     fs, H, σ², x = unpack(fx)
     p, m = size(H)
+    n = length(x)
 
     # Projection step.
-    Y = reshape_y(vec(y.X), length(x))
+    Y = reshape_y(vec(y.X), n)
     T, ΣT = project(H, σ²)
 
-    return -((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT)) +
-        sum((Y .- H*T*Y)' * (1/σ²) * (Y .- H*T*Y))) / 2
+    return -(((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))) +
+        sum((1/σ²) * (Y .- H*T*Y)' * (Y .- H*T*Y))) / 2
 end
 
 function regulariser(fx, Y::RowVecs{<:Real})
