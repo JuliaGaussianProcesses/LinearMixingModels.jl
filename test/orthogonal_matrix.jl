@@ -10,5 +10,5 @@
     @test size(H) == size(U)
     @test H.S == Diagonal(S)
     @test H.U == U
-    @test H == U*sqrt(Diagonal(S))
+    @test H == U * sqrt(Diagonal(S))
 end
