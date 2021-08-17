@@ -1,5 +1,6 @@
 @testset "ILMM" begin
     rng = Random.seed!(04161999)
+    atol = 1e-2
     @testset "Full Rank, Dense H" begin
         H = rand(3,3)
         k1, k2, k3 = SEKernel(), Matern32Kernel(), Matern32Kernel()
@@ -34,17 +35,17 @@
             y_3_test[i-3] = y3[val]
             end
         end
-        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
-        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        x_train = MOInputIsotopicByOutputs(x_train, 3)
+        x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
         y_test = vcat(y_1_test, y_2_test, y_3_test);
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test marginals(ilmmx) == marginals(n_ilmmx)
 
         p_ilmmx = posterior(ilmmx, y_train);
@@ -53,9 +54,9 @@
         pi = p_ilmmx(x_test, 1e-6);
         pni = p_n_ilmmx(x_test, 1e-6);
 
-        @test isapprox(mean(pi), mean(pni), atol=1e-4)
-        @test isapprox(var(pi), var(pni), atol=1e-4)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test isapprox(mean(pi), mean(pni), atol=atol)
+        @test isapprox(var(pi), var(pni), atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
         @test marginals(pi) == marginals(pni)
 
         @testset "primary_public_interface" begin
@@ -99,17 +100,17 @@
             y_3_test[i-3] = y3[val]
             end
         end
-        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
-        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        x_train = MOInputIsotopicByOutputs(x_train, 3)
+        x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
         y_test = vcat(y_1_test, y_2_test, y_3_test);
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test marginals(ilmmx) == marginals(n_ilmmx)
 
         p_ilmmx = posterior(ilmmx, y_train);
@@ -118,9 +119,9 @@
         pi = p_ilmmx(x_test, 1e-6);
         pni = p_n_ilmmx(x_test, 1e-6);
 
-        @test isapprox(mean(pi), mean(pni), atol=1e-4)
-        @test isapprox(var(pi), var(pni), atol=1e-4)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test isapprox(mean(pi), mean(pni), atol=atol)
+        @test isapprox(var(pi), var(pni), atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
         @test marginals(pi) == marginals(pni)
 
         @testset "primary_public_interface" begin
@@ -164,17 +165,17 @@
             y_3_test[i-3] = y3[val]
             end
         end
-        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
-        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        x_train = MOInputIsotopicByOutputs(x_train, 3)
+        x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
         y_test = vcat(y_1_test, y_2_test, y_3_test);
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test marginals(ilmmx) == marginals(n_ilmmx)
 
         p_ilmmx = posterior(ilmmx, y_train);
@@ -183,9 +184,9 @@
         pi = p_ilmmx(x_test, 1e-6);
         pni = p_n_ilmmx(x_test, 1e-6);
 
-        @test isapprox(mean(pi), mean(pni), atol=1e-4)
-        @test isapprox(var(pi), var(pni), atol=1e-4)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test isapprox(mean(pi), mean(pni), atol=atol)
+        @test isapprox(var(pi), var(pni), atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
         @test marginals(pi) == marginals(pni)
 
         @testset "primary_public_interface" begin
