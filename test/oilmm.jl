@@ -171,7 +171,7 @@
         y_test = vcat(y_1_test, y_2_test, y_3_test);
 
         ilmmx = ilmm(x_train, 0.1)
-        oilmmx = n_ilmm(x_train, 0.1)
+        oilmmx = oilmm(x_train, 0.1)
 
         @test isapprox(mean(ilmmx), mean(oilmmx), atol=atol)
         @test isapprox(var(ilmmx), var(oilmmx), atol=atol)
