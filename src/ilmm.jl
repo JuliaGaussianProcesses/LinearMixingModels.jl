@@ -81,7 +81,7 @@ julia> fs = independent_mogp([GP(Matern32Kernel())]);;
 
 julia> H = rand(2,1);
 
-julia> x = MOInputIsotopicByFeatures(ColVecs(rand(2,2), 2));
+julia> x = MOInputIsotopicByOutputs(ColVecs(rand(2,2), 2));
 
 julia> ilmmx = ILMM(fs, H)(x, 0.1);
 
@@ -89,7 +89,7 @@ julia> (fs, H, 0.1, x.x) == LinearMixingModels.unpack(ilmmx)
 true
 ```
 """
-function unpack(fx::FiniteGP{<:ILMM, <:isotopic_inputs, <:Diagonal{<:Real, <:Fill}})
+function unpack(fx::FiniteGP{<:ILMM, <:MOInputIsotopicByOutputs, <:Diagonal{<:Real, <:Fill}})
     f = fx.f.f
     H = fx.f.H
     σ² = noise_var(fx.Σy)
@@ -127,8 +127,9 @@ Follows the AbstractGPs.jl API.
 """
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
+    p, m = size(H)
 
-    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByOutputs(x, m)
 
     latent_rand =  rand(rng, f(x_mo_input))
     return vec(H * reshape(latent_rand, :, length(x)))
@@ -161,8 +162,9 @@ See AbstractGPs.jl API docs.
 """
 function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
+    p, m = size(H)
 
-    x_mo_input = MOInputIsotopicByFeatures(x, size(H,2))
+    x_mo_input = MOInputIsotopicByOutputs(x, m)
 
     # Compute the variances.
     M, V = mean_and_var(fx)
@@ -175,17 +177,24 @@ end
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
     p, m = size(H)
+    n = length(x)
 
-    x_mo_input = MOInputIsotopicByFeatures(x, size(H, 2))
+    x_mo_input = MOInputIsotopicByOutputs(x, m)
 
     # wrong, needs fixing
-    latent_mean, latent_var = mean_and_var(f(x_mo_input))
+    latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
+
+    H_block =  BlockDiagonal([H for _ in 1:n])
+    H_block′ =  BlockDiagonal([H' for _ in 1:n])
+    # @show size(H_block)
+    # @show size(H_block′)
+    # @show size(latent_cov)
 
     M = (H * reshape(latent_mean, :, length(x)))'
     # Compute the variances.
-    V = (abs2.(H) * reshape(latent_var, :, length(x)))' .+ σ²
+    V = diag(H_block * latent_cov * H_block′) .+ σ²
 
-    return collect(vec(M)), collect(vec(V))
+    return collect(vec(M)), V
 end
 
 # See AbstractGPs.jl API docs.
@@ -198,15 +207,16 @@ AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
 function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     f, H, σ², x = unpack(fx)
     p, m = size(H)
+    n = length(x)
 
     # # Projection step.
     Y = reshape_y(y, length(x))
     T, ΣT = project(H, σ²)
-    Ty = ColVecs(T*Y)
+    Ty = RowVecs((T*Y)')
     Xproj, Yproj = prepare_isotopic_multi_output_data(x, Ty)
-    ΣT = BlockDiagonal([ΣT for _ in 1:length(x)])
+    ΣT = kron(ΣT, Matrix(I,n,n))
 
-    return AbstractGPs.logpdf(f(Xproj, ΣT), Yproj) + regulariser(fx, ColVecs(Y))
+    return AbstractGPs.logpdf(f(Xproj, ΣT), Yproj) + regulariser(fx, Y)
 end
 
 """
@@ -215,34 +225,37 @@ end
 Computes the regularisation term of the logpdf.
 See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
 """
-function regulariser(fx, y::ColVecs{<:Real})
+function regulariser(fx, Y::AbstractMatrix{<:Real})
     fs, H, σ², x = unpack(fx)
     p, m = size(H)
-    n = length(x)
+    n = size(Y, 2)
 
     # Projection step.
-    Y = reshape_y(vec(y.X), n)
     T, ΣT = project(H, σ²)
 
-    return -(((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))) +
-        sum((1/σ²) * (Y .- H*T*Y)' * (Y .- H*T*Y))) / 2
+    # @show (sum((1/σ²) * abs2.(Y .- H*T*Y))) / 2
+    # @show -(n * ((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))))/2
+
+    return -(n * ((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))) +
+        sum((1/σ²) * abs2.(Y .- H*T*Y))) / 2
 end
 
-function regulariser(fx, Y::RowVecs{<:Real})
-    return regulariser(fx, ColVecs(Y.X'))
-end
+# function regulariser(fx, Y::RowVecs{<:Real})
+#     return regulariser(fx, ColVecs(Y.X'))
+# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.posterior(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     f, H, σ², x = unpack(fx)
     p, m = size(H)
+    n = length(x)
 
     # # Projection step.
     Y = reshape_y(y, length(x))
     T, ΣT = project(H, σ²)
     Ty = ColVecs(T*Y)
     Xproj, Yproj = prepare_isotopic_multi_output_data(x, Ty)
-    ΣT = BlockDiagonal([ΣT for _ in 1:length(x)])
+    ΣT = kron(ΣT, Matrix(I,n,n))
 
     f_posterior = AbstractGPs.posterior(f(Xproj, ΣT), Yproj)
     return ILMM(f_posterior, H)

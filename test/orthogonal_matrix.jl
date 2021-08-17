@@ -1,4 +1,4 @@
-@testset "orthogonal_matrix" begin
+@testset "ORTHOGONAL MATRIX" begin
     U = rand(5, 3)
     S = Diagonal(rand(3))
 

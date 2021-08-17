@@ -55,7 +55,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
     fs, H, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = hcat(map(f -> AbstractGPs.marginals(f(x)), fs.fs)...)
+    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs.fs))
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -86,7 +86,7 @@ function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     ΣT_rows = collect(eachrow(repeat(ΣT, 1, size(Ty, 2))))
     lmls_latents = map((f, s, y) -> logpdf(f(x, collect(s)), collect(y)), fs.fs, ΣT_rows, y_rows)
 
-    return sum(lmls_latents) + regulariser(H, σ², ColVecs(Y))
+    return sum(lmls_latents) + regulariser(H, σ², Y)
 end
 
 """
@@ -98,14 +98,18 @@ See e.g. appendix A.4 of [1] - Bruinsma et al 2020.
 function regulariser(
     H::Orthogonal{T},
     σ²::T,
-    Y::ColVecs{T},
+    Y::AbstractMatrix{T},
 ) where {T<:Real}
     U, S = H.U, H.S
 
-    n = length(Y)
+    n = size(Y, 2)
     p, m = size(U)
+
+    # @show (sum(abs2, (I - U * U') * Y) / σ²) / 2
+    # @show -(n * (logdet(S) + (p - m) * log(2π * σ²)))/2
+
     return -(n * (logdet(S) + (p - m) * log(2π * σ²)) +
-        sum(abs2, (I - U * U') * Y.X) / σ²) / 2
+        sum(abs2, (I - U * U') * Y) / σ²) / 2
 end
 
 # See AbstractGPs.jl API docs.

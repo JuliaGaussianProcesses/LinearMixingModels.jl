@@ -11,6 +11,7 @@ using Test
 using Zygote
 
 using AbstractGPs: AbstractGP, FiniteGP
+using AbstractGPs.TestUtils: test_finitegp_primary_public_interface
 using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
 # using LinearMixingModxels: marginals, rand
 # using Stheno: GaussianProcessProbabilisticProgramme
@@ -19,22 +20,22 @@ using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
     @testset "oilmm" begin
         include("oilmm.jl")
     end
-    @info "Ran oilmm tests"
+    @info "Ran oilmm tests."
 
     @testset "ilmm" begin
         include("ilmm.jl")
     end
-    @info "Ran ilmm tests"
+    @info "Ran ilmm tests."
 
     @testset "independent_mogp" begin
         include("independent_mogp.jl")
     end
-    @info "Ran independent_mogp tests"
+    @info "Ran independent_mogp tests."
 
     @testset "orthogonal_matrix" begin
         include("orthogonal_matrix.jl")
     end
-    @info "Ran orthogonal_matrix tests"
+    @info "Ran orthogonal_matrix tests."
 
     # @testset "doctests" begin
     #     DocMeta.setdocmeta!(

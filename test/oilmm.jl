@@ -1,137 +1,196 @@
-@testset "oilmm" begin
-#     @testset "single output" begin
-#         rng = MersenneTwister(123456)
+@testset "OILMM" begin
+rng = Random.seed!(04161999)
+    @testset "Full Rank, Dense H" begin
+        U, S, _ = svd(rand(rng, 3, 3))
+        H = Orthogonal(U, Diagonal(S));
+        fs = IndependentMOGP([GP(SEKernel()), GP(Matern32Kernel()), GP(Matern32Kernel())])
 
-#         # Specify inputs and generate observations.
-#         x = collect(range(-3.37, 3.12; length=11))
-#         tr_idx = randperm(rng, length(x))[1:6]
-#         te_idx = setdiff(eachindex(x), tr_idx)
-#         x_tr_raw = x[tr_idx]
-#         x_te_raw = x[te_idx]
+        ilmm = ILMM(fs, collect(H))
+        oilmm = ILMM(fs, H)
 
-#         # Noise variance.
-#         σ² = 0.12
+        x = range(0,10;length=5);
+        ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
+        y1 = ys[:,1]
+        y2 = ys[:,2]
+        y3 = ys[:,3]
+        indices = randcycle(rng, 5)
+        x_train = zeros(3)
+        y_1_train = zeros(3)
+        y_2_train = zeros(3)
+        y_3_train = zeros(3)
+        x_test = zeros(2)
+        y_1_test = zeros(2)
+        y_2_test = zeros(2)
+        y_3_test = zeros(2)
+        for (i, val) in enumerate(indices)
+            if i<=3
+                x_train[i] = x[val]
+                y_1_train[i] = y1[val]
+                y_2_train[i] = y2[val]
+            y_3_train[i] = y3[val]
+            else
+                x_test[i-3] = x[val]
+                y_1_test[i-3] = y1[val]
+                y_2_test[i-3] = y2[val]
+            y_3_test[i-3] = y3[val]
+            end
+        end
+        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
+        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        y_train = vcat(y_1_train, y_2_train, y_3_train)
+        y_test = vcat(y_1_test, y_2_test, y_3_test);
 
-#         # Specify the equivalent GPPP.
-#         a = randn(rng)
-#         f_naive = @gppp let
-#             f = a * GP(Matern52Kernel())
-#         end
+        ilmmx = ilmm(x_train, 0.1)
+        oilmmx = oilmm(x_train, 0.1)
 
-#         # Specify equivalent OILMM.
-#         fs = IndependentMOGP([GP(Matern52Kernel())])
-#         U = reshape([1.0], 1, 1)
-#         S = Diagonal([abs2(a)])
-#         H = Orthogonal(U,S)
-#         f = ILMM(fs, H)
-#         x_tr = MOInput(x_tr_raw, 1)
-#         x_te = MOInput(x_te_raw, 1)
-#         y_tr = rand(rng, f(x_tr, σ²))
-#         y_te = rand(rng, f(x_te, σ²))
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test marginals(ilmmx) == marginals(n_ilmmx)
 
-#         consistency_tests(
-#             rng, f, f_naive;
-#             x_tr=x_tr,
-#             x_te=x_te,
-#             x_naive_tr=GPPPInput(:f, x_tr_raw),
-#             x_naive_te=GPPPInput(:f, x_te_raw),
-#             y_tr=y_tr,
-#             y_te=y_te,
-#             σ²=σ²,
-#         )
-#     end
-#     @testset "P independent processes" begin
-#         rng = MersenneTwister(123456)
-#         P = 3
-#         N = 11
+        p_ilmmx = posterior(ilmmx, y_train);
+        p_oilmmx = posterior(n_ilmmx, y_train);
 
-#         # Specify inputs and generate observations.
-#         x = collect(range(-3.37, 3.12; length=N))
-#         tr_idx = randperm(rng, length(x))[1:2]
-#         te_idx = setdiff(eachindex(x), tr_idx)
-#         x_tr_raw = x[tr_idx]
-#         x_te_raw = x[te_idx]
+        pi = p_ilmmx(x_test, 0.1);
+        pni = p_n_ilmmx(x_test, 0.1);
 
-#         # Noise variance.
-#         σ² = 0.12
+        @test isapprox(mean(pi), mean(pni), atol=1e-4)
+        @test isapprox(var(pi), var(pni), atol=1e-4)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test marginals(pi) == marginals(pni)
 
-#         # Specify a collection of GPs
-#         as = randn(rng, P)
-#         gpc = Stheno.GPC()
-#         fs = map(p -> as[p] * wrap(GP(Matern52Kernel()), gpc), 1:P)
-#         f_naive = Stheno.GPPP(fs, gpc)
+        @testset "primary_public_interface" begin
+            test_finitegp_primary_public_interface(rng, ilmmx)
+            test_finitegp_primary_public_interface(rng, pi)
+        end
+    end
 
-#         x_naive_tr = BlockData(map(p -> GPPPInput(p, x_tr_raw), 1:P))
-#         x_naive_te = BlockData(map(p -> GPPPInput(p, x_te_raw), 1:P))
+    @testset "M Latent Processes" begin
+        U, S, _ = svd(rand(rng, 3, 2))
+        H = Orthogonal(U, Diagonal(S));
+        fs = IndependentMOGP([GP(SEKernel()), GP(Matern32Kernel())])
+        ilmm = ILMM(fs, collect(H))
+        oilmm = ILMM(fs, H)
 
-#         # Specify equivalent OILMM.
-#         U = collect(Diagonal(ones(P)))
-#         S = Diagonal(abs2.(as))
-#         H = Orthogonal(U,S)
-#         f = OILMM(IndependentMOGP([GP(Matern52Kernel()) for p in 1:P]), H)
-#         x_tr = MOInput(x_tr_raw, P)
-#         x_te = MOInput(x_te_raw, P)
-#         y_tr = rand(rng, f(x_tr, σ²))
-#         y_te = rand(rng, f(x_te, σ²))
+        x = range(0,10;length=5);
+        ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
+        y1 = ys[:,1]
+        y2 = ys[:,2]
+        y3 = ys[:,3]
+        indices = randcycle(rng, 5)
+        x_train = zeros(3)
+        y_1_train = zeros(3)
+        y_2_train = zeros(3)
+        y_3_train = zeros(3)
+        x_test = zeros(2)
+        y_1_test = zeros(2)
+        y_2_test = zeros(2)
+        y_3_test = zeros(2)
+        for (i, val) in enumerate(indices)
+            if i<=3
+                x_train[i] = x[val]
+                y_1_train[i] = y1[val]
+                y_2_train[i] = y2[val]
+            y_3_train[i] = y3[val]
+            else
+                x_test[i-3] = x[val]
+                y_1_test[i-3] = y1[val]
+                y_2_test[i-3] = y2[val]
+            y_3_test[i-3] = y3[val]
+            end
+        end
+        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
+        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        y_train = vcat(y_1_train, y_2_train, y_3_train)
+        y_test = vcat(y_1_test, y_2_test, y_3_test);
 
-#         consistency_tests(
-#             rng, f, f_naive;
-#             x_tr=x_tr,
-#             x_te=x_te,
-#             x_naive_tr=x_naive_tr,
-#             x_naive_te=x_naive_te,
-#             y_tr=y_tr,
-#             y_te=y_te,
-#             σ²=σ²,
-#         )
-#     end
-#     @testset "Full Rank, Dense H" begin
-#         rng = MersenneTwister(123456)
-#         P = 3
-#         N = 15
+        ilmmx = ilmm(x_train, 0.1)
+        n_ilmmx = n_ilmm(x_train, 0.1)
 
-#         # Specify inputs and generate observations.
-#         x = collect(range(-3.37, 3.12; length=N))
-#         tr_idx = randperm(rng, length(x))[1:2]
-#         te_idx = setdiff(eachindex(x), tr_idx)
-#         x_tr_raw = x[tr_idx]
-#         x_te_raw = x[te_idx]
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test marginals(ilmmx) == marginals(n_ilmmx)
 
-#         # Noise variance.
-#         σ² = 0.12
+        p_ilmmx = posterior(ilmmx, y_train);
+        p_n_ilmmx = posterior(n_ilmmx, y_train);
 
-#         # Construct a random orthogonal H.
-#         U, S_diag, _ = svd(randn(rng, P, P))
-#         H = U * Diagonal(sqrt.(S_diag))
+        pi = p_ilmmx(x_test, 0.1);
+        pni = p_n_ilmmx(x_test, 0.1);
 
-#         # Specify a collection of GPs
-#         gpc = Stheno.GPC()
-#         zs = [wrap(GP(Matern52Kernel()), gpc) for p in 1:P]
-#         fs = [sum(H[p, :] .* zs) for p in 1:P]
-#         f_naive = Stheno.GPPP(fs, gpc)
+        @test isapprox(mean(pi), mean(pni), atol=1e-4)
+        @test isapprox(var(pi), var(pni), atol=1e-4)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test marginals(pi) == marginals(pni)
 
-#         x_naive_tr = BlockData(map(p -> GPPPInput(p, x_tr_raw), 1:P))
-#         x_naive_te = BlockData(map(p -> GPPPInput(p, x_te_raw), 1:P))
+        @testset "primary_public_interface" begin
+            test_finitegp_primary_public_interface(rng, ilmmx)
+            test_finitegp_primary_public_interface(rng, pi)
+        end
+    end
 
-#         # Specify equivalent OILMM.
-#         D = Diagonal(zeros(P))
-#         f = OILMM(zs, U, Diagonal(S_diag), D)
+    @testset "1 Latent Processes" begin
+        U, S, _ = svd(rand(rng, 3, 1))
+        H = Orthogonal(U, Diagonal(S));
+        fs = IndependentMOGP([GP(SEKernel())])
 
-#         # Specify inputs and generate observations.
-#         x_tr = MOInput(x_tr_raw, P)
-#         x_te = MOInput(x_te_raw, P)
-#         y_tr = rand(rng, f(x_tr, σ²))
-#         y_te = rand(rng, f(x_te, σ²))
+        ilmm = ILMM(fs, collect(H))
+        oilmm = ILMM(fs, H)
 
-#         consistency_tests(
-#             rng, f, f_naive;
-#             x_tr=x_tr,
-#             x_te=x_te,
-#             x_naive_tr=x_naive_tr,
-#             x_naive_te=x_naive_te,
-#             y_tr=y_tr,
-#             y_te=y_te,
-#             σ²=σ²,
-#         )
-#     end
+        x = range(0,10;length=5);
+        ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
+        y1 = ys[:,1]
+        y2 = ys[:,2]
+        y3 = ys[:,3]
+        indices = randcycle(rng, 5)
+        x_train = zeros(3)
+        y_1_train = zeros(3)
+        y_2_train = zeros(3)
+        y_3_train = zeros(3)
+        x_test = zeros(2)
+        y_1_test = zeros(2)
+        y_2_test = zeros(2)
+        y_3_test = zeros(2)
+        for (i, val) in enumerate(indices)
+            if i<=3
+                x_train[i] = x[val]
+                y_1_train[i] = y1[val]
+                y_2_train[i] = y2[val]
+            y_3_train[i] = y3[val]
+            else
+                x_test[i-3] = x[val]
+                y_1_test[i-3] = y1[val]
+                y_2_test[i-3] = y2[val]
+            y_3_test[i-3] = y3[val]
+            end
+        end
+        x_train = kf.MOInputIsotopicByOutputs(x_train, 3)
+        x_test = kf.MOInputIsotopicByOutputs(x_test, 3)
+        y_train = vcat(y_1_train, y_2_train, y_3_train)
+        y_test = vcat(y_1_test, y_2_test, y_3_test);
+
+        ilmmx = ilmm(x_train, 0.1)
+        n_ilmmx = n_ilmm(x_train, 0.1)
+
+        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=1e-4)
+        @test isapprox(var(ilmmx), var(n_ilmmx), atol=1e-4)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=1e-4)
+        @test marginals(ilmmx) == marginals(n_ilmmx)
+
+        p_ilmmx = posterior(ilmmx, y_train);
+        p_n_ilmmx = posterior(n_ilmmx, y_train);
+
+        pi = p_ilmmx(x_test, 0.1);
+        pni = p_n_ilmmx(x_test, 0.1);
+
+        @test isapprox(mean(pi), mean(pni), atol=1e-4)
+        @test isapprox(var(pi), var(pni), atol=1e-4)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=1e-4)
+        @test marginals(pi) == marginals(pni)
+
+        @testset "primary_public_interface" begin
+            test_finitegp_primary_public_interface(rng, ilmmx)
+            test_finitegp_primary_public_interface(rng, pi)
+        end
+    end
 end
