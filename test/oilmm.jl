@@ -58,7 +58,7 @@
         @test isapprox(mean(pi), mean(po), atol=atol)
         @test isapprox(var(pi), var(po), atol=atol)
         @test isapprox(logpdf(pi, y_test), logpdf(po, y_test), atol=atol)
-        @test marginals(pi) == marginals(po)
+        @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
             test_finitegp_primary_public_interface(rng, oilmmx)
@@ -122,7 +122,7 @@
         @test isapprox(mean(pi), mean(po), atol=atol)
         @test isapprox(var(pi), var(po), atol=atol)
         @test isapprox(logpdf(pi, y_test), logpdf(po, y_test), atol=atol)
-        @test marginals(pi) == marginals(po)
+        @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
             test_finitegp_primary_public_interface(rng, oilmmx)
@@ -187,7 +187,7 @@
         @test isapprox(mean(pi), mean(po), atol=atol)
         @test isapprox(var(pi), var(po), atol=atol)
         @test isapprox(logpdf(pi, y_test), logpdf(po, y_test), atol=atol)
-        @test marginals(pi) == marginals(po)
+        @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
             test_finitegp_primary_public_interface(rng, oilmmx)

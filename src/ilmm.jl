@@ -154,24 +154,24 @@ function Distributions._rand!(
     end
 end
 
-"""
-    marginals(fx::FiniteGP{<:ILMM})
+# """
+#     marginals(fx::FiniteGP{<:ILMM})
 
-Returns the marginal distribution over the ILMM without the IID noise components.
-See AbstractGPs.jl API docs.
-"""
-function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
-    f, H, σ², x = unpack(fx)
-    p, m = size(H)
+# Returns the marginal distribution over the ILMM without the IID noise components.
+# See AbstractGPs.jl API docs.
+# """
+# function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
+#     f, H, σ², x = unpack(fx)
+#     p, m = size(H)
 
-    x_mo_input = MOInputIsotopicByOutputs(x, m)
+#     x_mo_input = MOInputIsotopicByOutputs(x, m)
 
-    # Compute the variances.
-    M, V = mean_and_var(fx)
+#     # Compute the variances.
+#     M, V = mean_and_var(fx)
 
-    # Package everything into independent Normal distributions.
-    return Normal.(M, sqrt.(V))
-end
+#     # Package everything into independent Normal distributions.
+#     return Normal.(M, sqrt.(V))
+# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
@@ -184,15 +184,17 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     # wrong, needs fixing
     latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
 
-    H_block =  BlockDiagonal([H for _ in 1:n])
-    H_block′ =  BlockDiagonal([H' for _ in 1:n])
+    H_full = kron(H, Matrix(I,n,n))
+    # H_block =  BlockDiagonal([H for _ in 1:n])
+    # H_block′ =  BlockDiagonal([H' for _ in 1:n])
     # @show size(H_block)
     # @show size(H_block′)
     # @show size(latent_cov)
 
-    M = (H * reshape(latent_mean, :, length(x)))'
+    # M = (H * reshape(latent_mean, :, length(x)))'
     # Compute the variances.
-    V = diag(H_block * latent_cov * H_block′) .+ σ²
+    M = H_full * latent_mean
+    V = diag(H_full * latent_cov * H_full') .+ σ²
 
     return collect(vec(M)), V
 end
@@ -253,7 +255,7 @@ function AbstractGPs.posterior(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     # # Projection step.
     Y = reshape_y(y, length(x))
     T, ΣT = project(H, σ²)
-    Ty = ColVecs(T*Y)
+    Ty = RowVecs((T*Y)')
     Xproj, Yproj = prepare_isotopic_multi_output_data(x, Ty)
     ΣT = kron(ΣT, Matrix(I,n,n))
 

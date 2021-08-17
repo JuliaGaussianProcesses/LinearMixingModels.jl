@@ -11,21 +11,19 @@ using Test
 using Zygote
 
 using AbstractGPs: AbstractGP, FiniteGP
-using AbstractGPs.TestUtils: test_finitegp_primary_public_interface
+using AbstractGPs.TestUtils:
+    test_finitegp_primary_public_interface,
+    test_finitegp_primary_and_secondary_public_interface,
+    test_internal_abstractgps_interface
 using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
 # using LinearMixingModxels: marginals, rand
 # using Stheno: GaussianProcessProbabilisticProgramme
 
-@testset "LinearMixingModels.jl" begin
-    @testset "oilmm" begin
-        include("oilmm.jl")
-    end
-    @info "Ran oilmm tests."
+function _is_approx(x::AbstractVector{<:Normal}, y::AbstractVector{<:Normal})
+    return (map(mean, x) ≈ map(mean, y)) && (map(std, x) ≈ map(std, y))
+end
 
-    @testset "ilmm" begin
-        include("ilmm.jl")
-    end
-    @info "Ran ilmm tests."
+@testset "LinearMixingModels.jl" begin
 
     @testset "independent_mogp" begin
         include("independent_mogp.jl")
@@ -36,6 +34,16 @@ using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
         include("orthogonal_matrix.jl")
     end
     @info "Ran orthogonal_matrix tests."
+
+    @testset "ilmm" begin
+        include("ilmm.jl")
+    end
+    @info "Ran ilmm tests."
+
+    @testset "oilmm" begin
+        include("oilmm.jl")
+    end
+    @info "Ran oilmm tests."
 
     # @testset "doctests" begin
     #     DocMeta.setdocmeta!(

@@ -61,5 +61,10 @@
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, fx)
         test_finitegp_primary_public_interface(rng, post_fx)
+
+        A = randn(rng, length(x_train_mo), length(x_train_mo))
+        Σy = A'A + I
+        test_finitegp_primary_and_secondary_public_interface(rng, f(x_train_mo, Σy))
+        test_internal_abstractgps_interface(rng, f, x_train_mo, x_test_mo)
     end
 end
