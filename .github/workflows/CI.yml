@@ -16,7 +16,6 @@ jobs:
       matrix:
         version:
           - '1'
-          - '1.0'
         os:
           - ubuntu-latest
         arch:
@@ -50,20 +49,20 @@ jobs:
           file: lcov.info
 
   # slack:
-  #   name: Notify Slack Failure
-  #   needs: test
-  #   runs-on: ubuntu-latest
-  #   if: always() && github.event_name == 'schedule'
-  #   steps:
-  #     - uses: technote-space/workflow-conclusion-action@v2
-  #     - uses: voxmedia/github-action-slack-notify-build@v1
-  #       if: env.WORKFLOW_CONCLUSION == 'failure'
-  #       with:
-  #         channel: nightly-rse
-  #         status: FAILED
-  #         color: danger
-  #       env:
-  #         SLACK_BOT_TOKEN: ${{ secrets.RSE_SLACK_BOT_TOKEN }}
+    name: Notify Slack Failure
+    needs: test
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'schedule'
+    steps:
+      - uses: technote-space/workflow-conclusion-action@v2
+      - uses: voxmedia/github-action-slack-notify-build@v1
+        if: env.WORKFLOW_CONCLUSION == 'failure'
+        with:
+          channel: nightly-rse
+          status: FAILED
+          color: danger
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.RSE_SLACK_BOT_TOKEN }}
 
   docs:
     name: Documentation
