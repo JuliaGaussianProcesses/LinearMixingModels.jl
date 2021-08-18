@@ -1,7 +1,12 @@
 using LinearMixingModels
 using Documenter
 
-DocMeta.setdocmeta!(LinearMixingModels, :DocTestSetup, :(using LinearMixingModels); recursive=true)
+DocMeta.setdocmeta!(
+    LinearMixingModels,
+    :DocTestSetup,
+    :(using LinearMixingModels);
+    recursive=true
+)
 
 makedocs(;
     modules=[LinearMixingModels],
