@@ -48,7 +48,7 @@ jobs:
         with:
           file: lcov.info
 
-  # slack:
+  slack:
     name: Notify Slack Failure
     needs: test
     runs-on: ubuntu-latest
