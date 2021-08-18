@@ -2,9 +2,12 @@
     OILMM(fs, H)
 An Orthogonal Instantaneous Linear Mixing Model (OILMM) -- a distribution over vector-
 valued functions. Let `p` be the number of observed outputs, and `m` the number of latent
-processes, then
+processes, then `H`, also known as the mixing matrix, is a `p x m` orthogonal matrix whose
+column space spans the output space. The latent processes are represented an `Independent_MOGP`
+as the latent processes remain decoupled.
+
 # Arguments:
-- fs: a length-`m` vector of Gaussian process objects as an IndependentMOGP.
+- f: a length-`m` vector of Gaussian process objects as an IndependentMOGP.
 - H: a `p x m` orthogonal matrix representing a fixed basis of our p-dim target: h_1,...,h_m
 """
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
@@ -104,9 +107,6 @@ function regulariser(
 
     n = size(Y, 2)
     p, m = size(U)
-
-    # @show (sum(abs2, (I - U * U') * Y) / σ²) / 2
-    # @show -(n * (logdet(S) + (p - m) * log(2π * σ²)))/2
 
     return -(n * (logdet(S) + (p - m) * log(2π * σ²)) +
         sum(abs2, (I - U * U') * Y) / σ²) / 2

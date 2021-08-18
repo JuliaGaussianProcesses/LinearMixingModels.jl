@@ -2,7 +2,9 @@
     ILMM(fs, H)
 An Instantaneous Linear Mixing Model (ILMM) -- a distribution over vector-
 valued functions. Let `p` be the number of observed outputs, and `m` the number of latent
-processes, then
+processes, then `H`, also known as the mixing matrix, is a `p x m` matrix whose column
+space spans the output space. The latent processes are represented a Gaussian process `f`.
+
 # Arguments:
 - fs: a length-`m` vector of Gaussian process objects from AbstractGPs.jl.
 - H: a `p x m` matrix representing a fixed basis of our p-dim target: h_1,...,h_m
@@ -61,10 +63,10 @@ Reshape `y` in to an adjoint Matrix of dimension (length(y)/N, N)`
 ```jldoctest
 julia> y = rand(16);
 
-julia> size(LinearMixingModels.reshape_y(y,8)) == (2, 8)
+julia> size(reshape_y(y,8)) == (2, 8)
 true
 
-julia> size(LinearMixingModels.reshape_y(y,2)) == (8, 2)
+julia> size(reshape_y(y,2)) == (8, 2)
 true
 ```
 """
@@ -81,11 +83,11 @@ julia> fs = independent_mogp([GP(Matern32Kernel())]);;
 
 julia> H = rand(2,1);
 
-julia> x = MOInputIsotopicByOutputs(ColVecs(rand(2,2), 2));
+julia> x = MOInputIsotopicByOutputs(rand(2,2), 2);
 
 julia> ilmmx = ILMM(fs, H)(x, 0.1);
 
-julia> (fs, H, 0.1, x.x) == LinearMixingModels.unpack(ilmmx)
+julia> (fs, H, 0.1, x.x) == unpack(ilmmx)
 true
 ```
 """
@@ -135,12 +137,12 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
     return vec(H * reshape(latent_rand, :, length(x)))
 end
 
-AbstractGPs.rand(fx::FiniteGP{<:ILMM}) = rand(Random.GLOBAL_RNG, fx)
-
+# See AbstractGPs.jl API docs.
 function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM}, N::Int)
     return reduce(hcat, [rand(rng, fx) for _ in 1:N])
 end
 
+# See AbstractGPs.jl API docs.
 function Distributions._rand!(
     rng::AbstractRNG,
     fx::FiniteGP{<:ILMM},
@@ -154,25 +156,6 @@ function Distributions._rand!(
     end
 end
 
-# """
-#     marginals(fx::FiniteGP{<:ILMM})
-
-# Returns the marginal distribution over the ILMM without the IID noise components.
-# See AbstractGPs.jl API docs.
-# """
-# function AbstractGPs.marginals(fx::FiniteGP{<:ILMM})
-#     f, H, σ², x = unpack(fx)
-#     p, m = size(H)
-
-#     x_mo_input = MOInputIsotopicByOutputs(x, m)
-
-#     # Compute the variances.
-#     M, V = mean_and_var(fx)
-
-#     # Package everything into independent Normal distributions.
-#     return Normal.(M, sqrt.(V))
-# end
-
 # See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
@@ -181,18 +164,10 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
 
     x_mo_input = MOInputIsotopicByOutputs(x, m)
 
-    # wrong, needs fixing
     latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
 
     H_full = kron(H, Matrix(I,n,n))
-    # H_block =  BlockDiagonal([H for _ in 1:n])
-    # H_block′ =  BlockDiagonal([H' for _ in 1:n])
-    # @show size(H_block)
-    # @show size(H_block′)
-    # @show size(latent_cov)
 
-    # M = (H * reshape(latent_mean, :, length(x)))'
-    # Compute the variances.
     M = H_full * latent_mean
     V = diag(H_full * latent_cov * H_full') .+ σ²
 
@@ -235,16 +210,9 @@ function regulariser(fx, Y::AbstractMatrix{<:Real})
     # Projection step.
     T, ΣT = project(H, σ²)
 
-    # @show (sum((1/σ²) * abs2.(Y .- H*T*Y))) / 2
-    # @show -(n * ((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))))/2
-
     return -(n * ((p - m) * log(2π) + (p * log(σ²) - logdet(ΣT))) +
         sum((1/σ²) * abs2.(Y .- H*T*Y))) / 2
 end
-
-# function regulariser(fx, Y::RowVecs{<:Real})
-#     return regulariser(fx, ColVecs(Y.X'))
-# end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.posterior(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})

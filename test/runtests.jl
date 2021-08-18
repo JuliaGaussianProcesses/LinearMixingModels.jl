@@ -1,12 +1,9 @@
 using AbstractGPs
-using Distributions
-# using FiniteDifferences
 using Documenter
 using KernelFunctions
 using LinearAlgebra
 using LinearMixingModels
 using Random
-using Stheno
 using Test
 using Zygote
 
@@ -16,8 +13,7 @@ using AbstractGPs.TestUtils:
     test_finitegp_primary_and_secondary_public_interface,
     test_internal_abstractgps_interface
 using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
-# using LinearMixingModxels: marginals, rand
-# using Stheno: GaussianProcessProbabilisticProgramme
+using LinearMixingModels: unpack, noise_var, get_latent_gp, reshape_y
 
 function _is_approx(x::AbstractVector{<:Normal}, y::AbstractVector{<:Normal})
     return (map(mean, x) ≈ map(mean, y)) && (map(std, x) ≈ map(std, y))
@@ -49,7 +45,14 @@ end
     #     DocMeta.setdocmeta!(
     #         LinearMixingModels,
     #         :DocTestSetup,
-    #         :(using AbstractGPs, Random, LinearAlgebra);
+    #         quote
+    #             using AbstractGPs
+    #             using KernelFunctions
+    #             using LinearMixingModels
+    #             using Random
+    #             using LinearAlgebra
+    #             using FillArrays
+    #         end;
     #         recursive=true,
     #     )
     #     doctest(
@@ -61,4 +64,5 @@ end
     #         ],
     #     )
     # end
+    # @info "Ran doctests."
 end
