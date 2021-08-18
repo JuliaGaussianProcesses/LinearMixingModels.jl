@@ -18,11 +18,6 @@ struct ILMM{
     H::TH
 end
 
-const isotopic_inputs = Union{
-    MOInputIsotopicByFeatures,
-    MOInputIsotopicByOutputs
-}
-
 """
     get_latent_gp(f::ILMM)
 

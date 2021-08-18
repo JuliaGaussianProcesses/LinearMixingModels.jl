@@ -11,7 +11,7 @@ using Statistics
 using FillArrays
 
 using AbstractGPs: AbstractGP, FiniteGP
-using KernelFunctions: MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
+using KernelFunctions: MOInputIsotopicByOutputs
 
 include("independent_mogp.jl")
 include("orthogonal_matrix.jl")

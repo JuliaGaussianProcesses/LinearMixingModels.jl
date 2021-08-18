@@ -26,19 +26,12 @@ function independent_mogp(fs::Vector{<:AbstractGP})
 end
 
 """
-A constant to represent all isotopic input types.
-"""
-const isotopic_inputs = Union{
-    MOInputIsotopicByFeatures, MOInputIsotopicByOutputs
-}
-
-"""
     finite_gps(fx)
 
 Returns a list of of the finite GPs for all latent processes, given a finite
 IndependentMOGP and *isotopic inputs*.
 """
-function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:isotopic_inputs}, σ²::Real)
+function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:MOInputIsotopicByOutputs}, σ²::Real)
     return [f(fx.x.x, σ²) for f in fx.f.fs]
 end
 
