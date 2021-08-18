@@ -74,7 +74,7 @@ Collect the relevant underlying fields of the Finite ILMM. This includes
 the latent space GP, the mixing matrix, the noise and the observations.
 
 ```jldoctest
-julia> fs = independent_mogp([GP(Matern32Kernel())]);;
+julia> fs = independent_mogp([GP(Matern32Kernel())]);
 
 julia> H = rand(2,1);
 
