@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: '1'
+          version: '1.6'
       - run: |
           julia --project=docs -e '
             using Pkg
@@ -79,5 +79,6 @@ jobs:
             Pkg.instantiate()
             include("docs/make.jl")'
         env:
+          JULIA_PKG_SERVER: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
