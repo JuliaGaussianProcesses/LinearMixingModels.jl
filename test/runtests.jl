@@ -1,4 +1,5 @@
 using AbstractGPs
+using Distributions
 using Documenter
 using KernelFunctions
 using LinearAlgebra

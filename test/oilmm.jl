@@ -47,7 +47,7 @@
         @test isapprox(mean(ilmmx), mean(oilmmx), atol=atol)
         @test isapprox(var(ilmmx), var(oilmmx), atol=atol)
         @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train), atol=atol)
-        @test marginals(ilmmx) == marginals(oilmmx)
+        @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train);
         p_oilmmx = posterior(oilmmx, y_train);
@@ -111,7 +111,7 @@
         @test isapprox(mean(ilmmx), mean(oilmmx), atol=atol)
         @test isapprox(var(ilmmx), var(oilmmx), atol=atol)
         @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train), atol=atol)
-        @test marginals(ilmmx) == marginals(oilmmx)
+        @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train);
         p_oilmmx = posterior(oilmmx, y_train);
@@ -176,7 +176,7 @@
         @test isapprox(mean(ilmmx), mean(oilmmx), atol=atol)
         @test isapprox(var(ilmmx), var(oilmmx), atol=atol)
         @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train), atol=atol)
-        @test marginals(ilmmx) == marginals(oilmmx)
+        @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train);
         p_oilmmx = posterior(oilmmx, y_train);
