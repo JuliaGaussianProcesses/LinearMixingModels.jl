@@ -17,7 +17,14 @@ end
 Returns an IndependentMOGP given a list of single output GPs `fs`.
 
 ```jldoctest
-julia> independent_mogp([GP(SEKernel())]) == IndependentMOGP([GP(SEKernel())])
+julia> ind_mogp1 = independent_mogp([GP(KernelFunctions.SEKernel())]);
+
+julia> ind_mogp2 = IndependentMOGP([GP(KernelFunctions.SEKernel())]);
+
+julia> typeof(ind_mogp1) == typeof(ind_mogp2)
+true
+
+julia> ind_mogp1.fs == ind_mogp2.fs
 true
 ```
 """
@@ -110,11 +117,10 @@ Posterior implementation for isotopic inputs, given diagonal Σy (OILMM).
 See AbstractGPs.jl API docs.
 """
 function AbstractGPs.posterior(
-    ft::IsotropicFiniteIndependentMOGP,
-    y::AbstractVector{<:Real},
+    ft::IsotropicFiniteIndependentMOGP, y::AbstractVector{<:Real}
 )
     finiteGPs = finite_gps(ft, ft.Σy[1])
-    ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
+    ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))
     ind_posts = [AbstractGPs.posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
-    return IndependentMOGP(ind_posts)
+    return independent_mogp(ind_posts)
 end

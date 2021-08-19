@@ -48,7 +48,7 @@ jobs:
         with:
           file: lcov.info
 
-  # slack:
+  slack:
     name: Notify Slack Failure
     needs: test
     runs-on: ubuntu-latest
@@ -79,5 +79,6 @@ jobs:
             Pkg.instantiate()
             include("docs/make.jl")'
         env:
+          JULIA_PKG_SERVER: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
