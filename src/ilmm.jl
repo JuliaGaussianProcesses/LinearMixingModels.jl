@@ -25,68 +25,24 @@ Returns the underlying latent space AbstractGP belonging to `f`.
 
 
 ```jldoctest
-julia> f = ILMM(IndependentMOGP([GP(SEKernel())]), rand(2,2));
+julia> f = ILMM(independent_mogp([GP(SEKernel())]), rand(2,2));
 
 julia> latent_f = get_latent_gp(f);
 
-julia> latent_f == IndependentMOGP([GP(SEKernel())])
+julia> latent_f isa IndependentMOGP
+true
+
+julia> latent_f.fs == [GP(SEKernel())]
 true
 ```
 """
 get_latent_gp(f::ILMM) = f.f
 
-"""
-    noise_var(Σ)
+noise_var(Σ::Diagonal{<:Real,<:Fill}) = FillArrays.getindex_value(Σ.diag)
 
-Return the diagonal element of Σ.
-
-```jldoctest
-julia> Σ = Diagonal(Fill(2, 3));
-
-julia> noise_var(Σ) == 2
-true
-```
-"""
-noise_var(Σ::Diagonal{<:Real, <:Fill}) = FillArrays.getindex_value(Σ.diag)
-
-
-"""
-    reshape_y(y, N)
-
-Reshape `y` in to an adjoint Matrix of dimension (length(y)/N, N)`
-
-```jldoctest
-julia> y = rand(16);
-
-julia> size(reshape_y(y,8)) == (2, 8)
-true
-
-julia> size(reshape_y(y,2)) == (8, 2)
-true
-```
-"""
 reshape_y(y::AbstractVector{<:Real}, N::Int) = reshape(y, N, :)'
 
-"""
-    unpack(fx)
-
-Collect the relevant underlying fields of the Finite ILMM. This includes
-the latent space GP, the mixing matrix, the noise and the observations.
-
-```jldoctest
-julia> fs = independent_mogp([GP(Matern32Kernel())]);;
-
-julia> H = rand(2,1);
-
-julia> x = MOInputIsotopicByOutputs(rand(2,2), 2);
-
-julia> ilmmx = ILMM(fs, H)(x, 0.1);
-
-julia> (fs, H, 0.1, x.x) == unpack(ilmmx)
-true
-```
-"""
-function unpack(fx::FiniteGP{<:ILMM, <:MOInputIsotopicByOutputs, <:Diagonal{<:Real, <:Fill}})
+function unpack(fx::FiniteGP{<:ILMM,<:MOInputIsotopicByOutputs,<:Diagonal{<:Real,<:Fill}})
     f = fx.f.f
     H = fx.f.H
     σ² = noise_var(fx.Σy)

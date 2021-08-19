@@ -1,6 +1,7 @@
 using AbstractGPs
 using Distributions
 using Documenter
+using FillArrays
 using KernelFunctions
 using LinearAlgebra
 using LinearMixingModels
