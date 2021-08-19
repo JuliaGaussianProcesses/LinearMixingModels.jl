@@ -125,5 +125,5 @@ function AbstractGPs.posterior(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
     y_rows = collect(eachrow(Ty))
     ΣT_rows = collect(eachrow(repeat(ΣT, 1, size(Ty, 2))))
     fs_posterior = map((f, s, y) -> AbstractGPs.posterior(f(x, collect(s)), collect(y)), fs.fs, ΣT_rows, y_rows)
-    return ILMM(IndependentMOGP(fs_posterior), H)
+    return ILMM(independent_mogp(fs_posterior), H)
 end

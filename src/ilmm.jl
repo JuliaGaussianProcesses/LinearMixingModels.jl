@@ -25,7 +25,7 @@ Returns the underlying latent space AbstractGP belonging to `f`.
 
 
 ```jldoctest
-julia> f = ILMM(IndependentMOGP([GP(SEKernel())]), rand(2,2));
+julia> f = ILMM(independent_mogp([GP(SEKernel())]), rand(2,2));
 
 julia> latent_f = get_latent_gp(f);
 
@@ -38,11 +38,11 @@ true
 """
 get_latent_gp(f::ILMM) = f.f
 
-noise_var(Σ::Diagonal{<:Real, <:Fill}) = FillArrays.getindex_value(Σ.diag)
+noise_var(Σ::Diagonal{<:Real,<:Fill}) = FillArrays.getindex_value(Σ.diag)
 
 reshape_y(y::AbstractVector{<:Real}, N::Int) = reshape(y, N, :)'
 
-function unpack(fx::FiniteGP{<:ILMM, <:MOInputIsotopicByOutputs, <:Diagonal{<:Real, <:Fill}})
+function unpack(fx::FiniteGP{<:ILMM,<:MOInputIsotopicByOutputs,<:Diagonal{<:Real,<:Fill}})
     f = fx.f.f
     H = fx.f.H
     σ² = noise_var(fx.Σy)

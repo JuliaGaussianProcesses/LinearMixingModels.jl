@@ -123,5 +123,5 @@ function AbstractGPs.posterior(
     finiteGPs = finite_gps(ft, ft.Σy[1])
     ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
     ind_posts = [AbstractGPs.posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
-    return IndependentMOGP(ind_posts)
+    return independent_mogp(ind_posts)
 end

@@ -5,7 +5,7 @@
         H = rand(3,3)
         k1, k2, k3 = SEKernel(), Matern32Kernel(), Matern32Kernel()
 
-        ilmm = ILMM(IndependentMOGP([GP(k1), GP(k2), GP(k3)]), H)
+        ilmm = ILMM(independent_mogp([GP(k1), GP(k2), GP(k3)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k1, k2, k3], H'))
 
         x = range(0,10;length=5);
@@ -70,7 +70,7 @@
 
         k1, k2 = SEKernel(), Matern32Kernel()
 
-        ilmm = ILMM(IndependentMOGP([GP(k1), GP(k2)]), H)
+        ilmm = ILMM(independent_mogp([GP(k1), GP(k2)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k1, k2], H'))
 
         x = range(0,10;length=5);
@@ -135,7 +135,7 @@
 
         k = SEKernel()
 
-        ilmm = ILMM(IndependentMOGP([GP(k)]), H)
+        ilmm = ILMM(independent_mogp([GP(k)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k], H'))
 
         x = range(0,10;length=5);
@@ -194,12 +194,12 @@
             @test noise_var(Σ) == 2
 
             y = rand(16)
-            @test size(reshape_y(y,8)) == (2, 8)
-            @test size(reshape_y(y,2)) == (8, 2)
+            @test size(reshape_y(y, 8)) == (2, 8)
+            @test size(reshape_y(y, 2)) == (8, 2)
 
             fs = independent_mogp([GP(Matern32Kernel())]);
-            H = rand(2,1)
-            x = MOInputIsotopicByOutputs(ColVecs(rand(2,2)), 2)
+            H = rand(2, 1)
+            x = MOInputIsotopicByOutputs(ColVecs(rand(2, 2)), 2)
             ilmmx = ILMM(fs, H)(x, 0.1)
             @test (fs, H, 0.1, x.x) == unpack(ilmmx)
         end

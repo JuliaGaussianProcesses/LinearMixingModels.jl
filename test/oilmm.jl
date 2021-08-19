@@ -4,7 +4,7 @@
     @testset "Full Rank, Dense H" begin
         U, S, _ = svd(rand(rng, 3, 3))
         H = Orthogonal(U, Diagonal(S));
-        fs = IndependentMOGP([GP(SEKernel()), GP(Matern32Kernel()), GP(Matern32Kernel())])
+        fs = independent_mogp([GP(SEKernel()), GP(Matern32Kernel()), GP(Matern32Kernel())])
 
         ilmm = ILMM(fs, collect(H))
         oilmm = ILMM(fs, H)
@@ -69,7 +69,7 @@
     @testset "M Latent Processes" begin
         U, S, _ = svd(rand(rng, 3, 2))
         H = Orthogonal(U, Diagonal(S));
-        fs = IndependentMOGP([GP(SEKernel()), GP(Matern32Kernel())])
+        fs = independent_mogp([GP(SEKernel()), GP(Matern32Kernel())])
         ilmm = ILMM(fs, collect(H))
         oilmm = ILMM(fs, H)
 
@@ -133,7 +133,7 @@
     @testset "1 Latent Processes" begin
         U, S, _ = svd(rand(rng, 3, 1))
         H = Orthogonal(U, Diagonal(S));
-        fs = IndependentMOGP([GP(SEKernel())])
+        fs = independent_mogp([GP(SEKernel())])
 
         ilmm = ILMM(fs, collect(H))
         oilmm = ILMM(fs, H)
