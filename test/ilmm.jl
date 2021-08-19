@@ -2,13 +2,13 @@
     rng = Random.seed!(04161999)
     atol = 1e-2
     @testset "Full Rank, Dense H" begin
-        H = rand(3,3)
+        H = rand(3, 3)
         k1, k2, k3 = SEKernel(), Matern32Kernel(), Matern32Kernel()
 
         ilmm = ILMM(independent_mogp([GP(k1), GP(k2), GP(k3)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k1, k2, k3], H'))
 
-        x = range(0,10;length=5);
+        x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
         y1 = ys[:,1]
         y2 = ys[:,2]
@@ -38,7 +38,7 @@
         x_train = MOInputIsotopicByOutputs(x_train, 3)
         x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
-        y_test = vcat(y_1_test, y_2_test, y_3_test);
+        y_test = vcat(y_1_test, y_2_test, y_3_test)
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
@@ -48,11 +48,11 @@
         @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
 
-        p_ilmmx = posterior(ilmmx, y_train);
-        p_n_ilmmx = posterior(n_ilmmx, y_train);
+        p_ilmmx = posterior(ilmmx, y_train)
+        p_n_ilmmx = posterior(n_ilmmx, y_train)
 
-        pi = p_ilmmx(x_test, 1e-6);
-        pni = p_n_ilmmx(x_test, 1e-6);
+        pi = p_ilmmx(x_test, 1e-6)
+        pni = p_n_ilmmx(x_test, 1e-6)
 
         @test isapprox(mean(pi), mean(pni), atol=atol)
         @test isapprox(var(pi), var(pni), atol=atol)
@@ -73,7 +73,7 @@
         ilmm = ILMM(independent_mogp([GP(k1), GP(k2)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k1, k2], H'))
 
-        x = range(0,10;length=5);
+        x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
         y1 = ys[:,1]
         y2 = ys[:,2]
@@ -103,7 +103,7 @@
         x_train = MOInputIsotopicByOutputs(x_train, 3)
         x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
-        y_test = vcat(y_1_test, y_2_test, y_3_test);
+        y_test = vcat(y_1_test, y_2_test, y_3_test)
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
@@ -113,11 +113,11 @@
         @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
 
-        p_ilmmx = posterior(ilmmx, y_train);
-        p_n_ilmmx = posterior(n_ilmmx, y_train);
+        p_ilmmx = posterior(ilmmx, y_train)
+        p_n_ilmmx = posterior(n_ilmmx, y_train)
 
-        pi = p_ilmmx(x_test, 1e-6);
-        pni = p_n_ilmmx(x_test, 1e-6);
+        pi = p_ilmmx(x_test, 1e-6)
+        pni = p_n_ilmmx(x_test, 1e-6)
 
         @test isapprox(mean(pi), mean(pni), atol=atol)
         @test isapprox(var(pi), var(pni), atol=atol)
@@ -138,7 +138,7 @@
         ilmm = ILMM(independent_mogp([GP(k)]), H)
         n_ilmm = GP(LinearMixingModelKernel([k], H'))
 
-        x = range(0,10;length=5);
+        x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
         y1 = ys[:,1]
         y2 = ys[:,2]
@@ -168,7 +168,7 @@
         x_train = MOInputIsotopicByOutputs(x_train, 3)
         x_test = MOInputIsotopicByOutputs(x_test, 3)
         y_train = vcat(y_1_train, y_2_train, y_3_train)
-        y_test = vcat(y_1_test, y_2_test, y_3_test);
+        y_test = vcat(y_1_test, y_2_test, y_3_test)
 
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
@@ -178,11 +178,11 @@
         @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
         @test marginals(ilmmx) == marginals(n_ilmmx)
 
-        p_ilmmx = posterior(ilmmx, y_train);
-        p_n_ilmmx = posterior(n_ilmmx, y_train);
+        p_ilmmx = posterior(ilmmx, y_train)
+        p_n_ilmmx = posterior(n_ilmmx, y_train)
 
-        pi = p_ilmmx(x_test, 1e-6);
-        pni = p_n_ilmmx(x_test, 1e-6);
+        pi = p_ilmmx(x_test, 1e-6)
+        pni = p_n_ilmmx(x_test, 1e-6)
 
         @test isapprox(mean(pi), mean(pni), atol=atol)
         @test isapprox(var(pi), var(pni), atol=atol)
@@ -197,7 +197,7 @@
             @test size(reshape_y(y, 8)) == (2, 8)
             @test size(reshape_y(y, 2)) == (8, 2)
 
-            fs = independent_mogp([GP(Matern32Kernel())]);
+            fs = independent_mogp([GP(Matern32Kernel())])
             H = rand(2, 1)
             x = MOInputIsotopicByOutputs(ColVecs(rand(2, 2)), 2)
             ilmmx = ILMM(fs, H)(x, 0.1)

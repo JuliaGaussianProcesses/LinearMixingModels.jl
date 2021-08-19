@@ -121,7 +121,7 @@ function AbstractGPs.posterior(
     y::AbstractVector{<:Real},
 )
     finiteGPs = finite_gps(ft, ft.Σy[1])
-    ys = collect(eachcol(reshape(y, (length(ft.x.x),:))))
+    ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))
     ind_posts = [AbstractGPs.posterior(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)]
     return independent_mogp(ind_posts)
 end
