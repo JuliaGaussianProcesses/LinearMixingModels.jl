@@ -200,8 +200,11 @@
             fs = independent_mogp([GP(Matern32Kernel())])
             H = rand(2, 1)
             x = MOInputIsotopicByOutputs(ColVecs(rand(2, 2)), 2)
-            ilmmx = ILMM(fs, H)(x, 0.1)
+            ilmm = ILMM(fs, H)
+            ilmmx = ilmm(x, 0.1)
             @test (fs, H, 0.1, x.x) == unpack(ilmmx)
+
+            @test get_latent_gp(ilmm) == fs
         end
 
         @testset "primary_public_interface" begin
