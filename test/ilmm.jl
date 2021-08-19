@@ -43,9 +43,9 @@
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx); atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx); atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train); atol=atol)
         @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -54,9 +54,9 @@
         pi = p_ilmmx(x_test, 1e-6)
         pni = p_n_ilmmx(x_test, 1e-6)
 
-        @test isapprox(mean(pi), mean(pni), atol=atol)
-        @test isapprox(var(pi), var(pni), atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
+        @test isapprox(mean(pi), mean(pni); atol=atol)
+        @test isapprox(var(pi), var(pni); atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test); atol=atol)
         @test _is_approx(marginals(pi), marginals(pni))
 
         @testset "primary_public_interface" begin
@@ -108,9 +108,9 @@
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx); atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx); atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train); atol=atol)
         @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -119,9 +119,9 @@
         pi = p_ilmmx(x_test, 1e-6)
         pni = p_n_ilmmx(x_test, 1e-6)
 
-        @test isapprox(mean(pi), mean(pni), atol=atol)
-        @test isapprox(var(pi), var(pni), atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
+        @test isapprox(mean(pi), mean(pni); atol=atol)
+        @test isapprox(var(pi), var(pni); atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test); atol=atol)
         @test _is_approx(marginals(pi), marginals(pni))
 
         @testset "primary_public_interface" begin
@@ -173,9 +173,9 @@
         ilmmx = ilmm(x_train, 1e-6)
         n_ilmmx = n_ilmm(x_train, 1e-6)
 
-        @test isapprox(mean(ilmmx), mean(n_ilmmx), atol=atol)
-        @test isapprox(var(ilmmx), var(n_ilmmx), atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train), atol=atol)
+        @test isapprox(mean(ilmmx), mean(n_ilmmx); atol=atol)
+        @test isapprox(var(ilmmx), var(n_ilmmx); atol=atol)
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train); atol=atol)
         @test marginals(ilmmx) == marginals(n_ilmmx)
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -184,9 +184,9 @@
         pi = p_ilmmx(x_test, 1e-6)
         pni = p_n_ilmmx(x_test, 1e-6)
 
-        @test isapprox(mean(pi), mean(pni), atol=atol)
-        @test isapprox(var(pi), var(pni), atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test), atol=atol)
+        @test isapprox(mean(pi), mean(pni); atol=atol)
+        @test isapprox(var(pi), var(pni); atol=atol)
+        @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test); atol=atol)
         @test _is_approx(marginals(pi), marginals(pni))
 
         @testset "util" begin
