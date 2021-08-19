@@ -17,7 +17,14 @@ end
 Returns an IndependentMOGP given a list of single output GPs `fs`.
 
 ```jldoctest
-julia> independent_mogp([GP(SEKernel())]) == IndependentMOGP([GP(SEKernel())])
+julia> ind_mogp1 = independent_mogp([GP(KernelFunctions.SEKernel())]);
+
+julia> ind_mogp2 = IndependentMOGP([GP(KernelFunctions.SEKernel())]);
+
+julia> typeof(ind_mogp1) == typeof(ind_mogp2)
+true
+
+julia> ind_mogp1.fs == ind_mogp2.fs
 true
 ```
 """

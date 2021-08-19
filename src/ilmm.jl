@@ -29,7 +29,10 @@ julia> f = ILMM(IndependentMOGP([GP(SEKernel())]), rand(2,2));
 
 julia> latent_f = get_latent_gp(f);
 
-julia> latent_f == IndependentMOGP([GP(SEKernel())])
+julia> latent_f isa IndependentMOGP
+true
+
+julia> latent_f.fs == [GP(SEKernel())]
 true
 ```
 """
@@ -43,7 +46,7 @@ Return the diagonal element of Σ.
 ```jldoctest
 julia> Σ = Diagonal(Fill(2, 3));
 
-julia> noise_var(Σ) == 2
+julia> LinearMixingModels.noise_var(Σ) == 2
 true
 ```
 """
@@ -58,10 +61,10 @@ Reshape `y` in to an adjoint Matrix of dimension (length(y)/N, N)`
 ```jldoctest
 julia> y = rand(16);
 
-julia> size(reshape_y(y,8)) == (2, 8)
+julia> size(LinearMixingModels.reshape_y(y,8)) == (2, 8)
 true
 
-julia> size(reshape_y(y,2)) == (8, 2)
+julia> size(LinearMixingModels.reshape_y(y,2)) == (8, 2)
 true
 ```
 """
@@ -78,11 +81,11 @@ julia> fs = independent_mogp([GP(Matern32Kernel())]);
 
 julia> H = rand(2,1);
 
-julia> x = MOInputIsotopicByOutputs(rand(2,2), 2);
+julia> x = KernelFunctions.MOInputIsotopicByOutputs(ColVecs(rand(2,2)), 2);
 
 julia> ilmmx = ILMM(fs, H)(x, 0.1);
 
-julia> (fs, H, 0.1, x.x) == unpack(ilmmx)
+julia> (fs, H, 0.1, x.x) == LinearMixingModels.unpack(ilmmx)
 true
 ```
 """

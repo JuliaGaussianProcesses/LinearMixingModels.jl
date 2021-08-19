@@ -4,7 +4,7 @@ using Documenter
 DocMeta.setdocmeta!(
     LinearMixingModels,
     :DocTestSetup,
-    :(using LinearMixingModels);
+    :(using LinearMixingModels, KernelFunctions, FillArrays, LinearAlgebra, AbstractGPs);
     recursive=true
 )
 
