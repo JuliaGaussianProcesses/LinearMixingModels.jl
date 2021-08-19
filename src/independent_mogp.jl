@@ -117,8 +117,7 @@ Posterior implementation for isotopic inputs, given diagonal Σy (OILMM).
 See AbstractGPs.jl API docs.
 """
 function AbstractGPs.posterior(
-    ft::IsotropicFiniteIndependentMOGP,
-    y::AbstractVector{<:Real},
+    ft::IsotropicFiniteIndependentMOGP, y::AbstractVector{<:Real},
 )
     finiteGPs = finite_gps(ft, ft.Σy[1])
     ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))

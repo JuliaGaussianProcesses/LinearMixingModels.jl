@@ -10,9 +10,9 @@
 
         x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
-        y1 = ys[:,1]
-        y2 = ys[:,2]
-        y3 = ys[:,3]
+        y1 = ys[:, 1]
+        y2 = ys[:, 2]
+        y3 = ys[:, 3]
         indices = randcycle(rng, 5)
         x_train = zeros(3)
         y_1_train = zeros(3)
@@ -75,9 +75,9 @@
 
         x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
-        y1 = ys[:,1]
-        y2 = ys[:,2]
-        y3 = ys[:,3]
+        y1 = ys[:, 1]
+        y2 = ys[:, 2]
+        y3 = ys[:, 3]
         indices = randcycle(rng, 5)
         x_train = zeros(3)
         y_1_train = zeros(3)
@@ -140,9 +140,9 @@
 
         x = range(0, 10; length=5)
         ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
-        y1 = ys[:,1]
-        y2 = ys[:,2]
-        y3 = ys[:,3]
+        y1 = ys[:, 1]
+        y2 = ys[:, 2]
+        y3 = ys[:, 3]
         indices = randcycle(rng, 5)
         x_train = zeros(3)
         y_1_train = zeros(3)
