@@ -27,10 +27,10 @@ end
     end
     @info "Ran independent_mogp tests."
 
-    @testset "orthogonal_matrix" begin
-        include("orthogonal_matrix.jl")
-    end
-    @info "Ran orthogonal_matrix tests."
+    # @testset "orthogonal_matrix" begin
+    #     include("orthogonal_matrix.jl")
+    # end
+    # @info "Ran orthogonal_matrix tests."
 
     @testset "ilmm" begin
         include("ilmm.jl")
