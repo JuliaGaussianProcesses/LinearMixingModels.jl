@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(
     LinearMixingModels,
     :DocTestSetup,
     :(using LinearMixingModels, KernelFunctions, FillArrays, LinearAlgebra, AbstractGPs);
-    recursive=true
+    recursive=true,
 )
 
 makedocs(;
