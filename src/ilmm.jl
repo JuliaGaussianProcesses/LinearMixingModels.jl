@@ -38,57 +38,10 @@ true
 """
 get_latent_gp(f::ILMM) = f.f
 
-"""
-    noise_var(Σ)
-
-Return the diagonal element of Σ.
-
-```jldoctest
-julia> Σ = Diagonal(Fill(2, 3));
-
-julia> LinearMixingModels.noise_var(Σ) == 2
-true
-```
-"""
 noise_var(Σ::Diagonal{<:Real, <:Fill}) = FillArrays.getindex_value(Σ.diag)
 
-
-"""
-    reshape_y(y, N)
-
-Reshape `y` in to an adjoint Matrix of dimension (length(y)/N, N)`
-
-```jldoctest
-julia> y = rand(16);
-
-julia> size(LinearMixingModels.reshape_y(y,8)) == (2, 8)
-true
-
-julia> size(LinearMixingModels.reshape_y(y,2)) == (8, 2)
-true
-```
-"""
 reshape_y(y::AbstractVector{<:Real}, N::Int) = reshape(y, N, :)'
 
-"""
-    unpack(fx)
-
-Collect the relevant underlying fields of the Finite ILMM. This includes
-the latent space GP, the mixing matrix, the noise and the observations.
-
-```jldoctest
-julia> fs = independent_mogp([GP(Matern32Kernel())]);
-
-julia> H = rand(2,1);
-
-julia> x = KernelFunctions.MOInputIsotopicByOutputs(ColVecs(rand(2,2)), 2);
-
-julia> ilmmx = ILMM(fs, H)(x, 0.1);
-
-julia> (fs, H, 0.1, x.x) == LinearMixingModels.unpack(ilmmx)
-true
-```
-"""
 function unpack(fx::FiniteGP{<:ILMM, <:MOInputIsotopicByOutputs, <:Diagonal{<:Real, <:Fill}})
     f = fx.f.f
     H = fx.f.H
