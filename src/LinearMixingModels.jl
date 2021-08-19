@@ -19,7 +19,7 @@ include("ilmm.jl")
 include("oilmm.jl")
 
 export ILMM
-export independent_mogp
+export IndependentMOGP, independent_mogp
 export Orthogonal, OILMM
 export get_latent_gp
 
