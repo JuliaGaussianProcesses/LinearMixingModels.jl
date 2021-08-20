@@ -1,11 +1,11 @@
 @testset "independent_mogp" begin
-    rng = Random.seed!(123);
+    rng = Random.seed!(123)
     x = range(1, 2; length=5)
     ϵ = rand(Normal(0, 0.5), 5)
     y_1 = 30 .+ sqrt.(x) .* sin.(x) .+ ϵ
     y_2 = 10 .+ cbrt.(x) .* cos.(2x) .+ ϵ
 
-    indices =  randcycle(rng, 5)
+    indices = randcycle(rng, 5)
     x_train = zeros(3)
     y_1_train = zeros(3)
     y_2_train = zeros(3)
