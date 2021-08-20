@@ -1,4 +1,4 @@
-@testset "ORTHOGONAL MATRIX" begin
+@testset "orthogonal_matrix" begin
     U = rand(5, 3)
     S = Diagonal(rand(3))
 
@@ -12,3 +12,4 @@
     @test H.U == U
     @test H == U * sqrt(Diagonal(S))
 end
+@info "Ran orthogonal_matrix tests."
