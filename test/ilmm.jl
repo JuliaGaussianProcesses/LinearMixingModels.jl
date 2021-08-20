@@ -1,4 +1,4 @@
-@testset "ILMM" begin
+@testset "ilmm" begin
     rng = Random.seed!(04161999)
     x = range(0, 10; length=5)
     ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
