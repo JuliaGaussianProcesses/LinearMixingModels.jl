@@ -1,4 +1,4 @@
-@testset "INDEPENDENT MOGP" begin
+@testset "independent_mogp" begin
     rng = Random.seed!(123);
     x = range(1,2;length=5)
     ϵ = rand(Normal(0,0.5), 5)
@@ -68,3 +68,5 @@
         test_internal_abstractgps_interface(rng, f, x_train_mo, x_test_mo)
     end
 end
+
+@info "Ran independent_mogp tests."

@@ -130,3 +130,4 @@
         end
     end
 end
+@info "Ran oilmm tests."
