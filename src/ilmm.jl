@@ -60,12 +60,9 @@ Computes the projection `T` and `ΣT` given the mixing matrix and noise.
 """
 function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
     Σ = σ²*I
-
-    # Compute the projected noise, which is a matrix of size `size(Yproj)`.
-    ΣT = inv(H' * inv(Σ) * H)
-
-    # Compute transformation for the projection of the data.
-    T = ΣT * H' * inv(Σ)
+    ΣT_inv = H' * inv(Σ) * H
+    T = cholesky(Symmetric(ΣT_inv)) \ H' * inv(Σ) # Σ easily invertible, no problem there
+    ΣT = T * Σ * T'
 
     return T, ΣT
 end
@@ -120,7 +117,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     H_full = kron(H, Matrix(I,n,n))
 
     M = H_full * latent_mean
-    V = diag(H_full * latent_cov * H_full') .+ σ²
+    V = AbstractGPs.diag_Xt_A_X(cholesky(latent_cov), H_full') .+ σ²
 
     return collect(vec(M)), V
 end
