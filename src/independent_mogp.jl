@@ -78,7 +78,7 @@ end
 function AbstractGPs.logpdf(ft::IsotropicFiniteIndependentMOGP, y::AbstractVector)
     finiteGPs = finite_gps(ft, ft.Σy[1])
     ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))
-    return sum([logpdf(fx, y_i) for (fx, y_i) in zip(finiteGPs, ys)])
+    return sum(map((fx, y_i) -> logpdf(fx, y_i), finiteGPs, ys))
 end
 
 # See AbstractGPs.jl API docs.
