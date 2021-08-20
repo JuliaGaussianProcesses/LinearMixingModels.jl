@@ -59,7 +59,7 @@ end
 Computes the projection `T` and `ΣT` given the mixing matrix and noise.
 """
 function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
-    Σ = σ²*I
+    Σ = σ² * I
     ΣT_inv = H' * inv(Σ) * H
     T = cholesky(Symmetric(ΣT_inv)) \ H' * inv(Σ) # Σ easily invertible, no problem there
     ΣT = T * Σ * T'
@@ -114,7 +114,7 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
 
     latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
 
-    H_full = kron(H, Matrix(I,n,n))
+    H_full = kron(H, Matrix(I, n, n))
 
     M = H_full * latent_mean
     V = AbstractGPs.diag_Xt_A_X(cholesky(latent_cov), H_full') .+ σ²

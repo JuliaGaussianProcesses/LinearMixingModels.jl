@@ -16,16 +16,16 @@
     y_2_test = zeros(2)
     y_3_test = zeros(2)
     for (i, val) in enumerate(indices)
-        if i<=3
+        if i <= 3
             x_train[i] = x[val]
             y_1_train[i] = y1[val]
             y_2_train[i] = y2[val]
-        y_3_train[i] = y3[val]
+            y_3_train[i] = y3[val]
         else
-            x_test[i-3] = x[val]
-            y_1_test[i-3] = y1[val]
-            y_2_test[i-3] = y2[val]
-        y_3_test[i-3] = y3[val]
+            x_test[i - 3] = x[val]
+            y_1_test[i - 3] = y1[val]
+            y_2_test[i - 3] = y2[val]
+            y_3_test[i - 3] = y3[val]
         end
     end
     x_train = MOInputIsotopicByOutputs(x_train, 3)
