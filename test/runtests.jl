@@ -21,6 +21,8 @@ function _is_approx(x::AbstractVector{<:Normal}, y::AbstractVector{<:Normal})
     return (map(mean, x) ≈ map(mean, y)) && (map(std, x) ≈ map(std, y))
 end
 
+include("test_utils.jl")
+
 @testset "LinearMixingModels.jl" begin
     include("independent_mogp.jl")
     include("orthogonal_matrix.jl")
