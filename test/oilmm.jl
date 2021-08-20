@@ -1,6 +1,5 @@
 @testset "OILMM" begin
     rng = Random.seed!(04161999)
-    atol = 1e-2
     x = range(0, 10; length=5)
     ys = rand(rng, GP(SEKernel())(x, 1e-6), 3)
     y1 = ys[:, 1]
@@ -44,9 +43,9 @@
         ilmmx = ilmm(x_train, 0.1)
         oilmmx = oilmm(x_train, 0.1)
 
-        @test isapprox(mean(ilmmx), mean(oilmmx); atol=atol)
-        @test isapprox(var(ilmmx), var(oilmmx); atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train); atol=atol)
+        @test isapprox(mean(ilmmx), mean(oilmmx))
+        @test isapprox(var(ilmmx), var(oilmmx))
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train))
         @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -55,9 +54,9 @@
         pi = p_ilmmx(x_test, 0.1)
         po = p_oilmmx(x_test, 0.1)
 
-        @test isapprox(mean(pi), mean(po); atol=atol)
-        @test isapprox(var(pi), var(po); atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test); atol=atol)
+        @test isapprox(mean(pi), mean(po))
+        @test isapprox(var(pi), var(po))
+        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test))
         @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
@@ -76,9 +75,9 @@
         ilmmx = ilmm(x_train, 0.1)
         oilmmx = oilmm(x_train, 0.1)
 
-        @test isapprox(mean(ilmmx), mean(oilmmx); atol=atol)
-        @test isapprox(var(ilmmx), var(oilmmx); atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train); atol=atol)
+        @test isapprox(mean(ilmmx), mean(oilmmx))
+        @test isapprox(var(ilmmx), var(oilmmx))
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train))
         @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -87,9 +86,9 @@
         pi = p_ilmmx(x_test, 0.1)
         po = p_oilmmx(x_test, 0.1)
 
-        @test isapprox(mean(pi), mean(po); atol=atol)
-        @test isapprox(var(pi), var(po); atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test); atol=atol)
+        @test isapprox(mean(pi), mean(po))
+        @test isapprox(var(pi), var(po))
+        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test))
         @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
@@ -109,9 +108,9 @@
         ilmmx = ilmm(x_train, 0.1)
         oilmmx = oilmm(x_train, 0.1)
 
-        @test isapprox(mean(ilmmx), mean(oilmmx); atol=atol)
-        @test isapprox(var(ilmmx), var(oilmmx); atol=atol)
-        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train); atol=atol)
+        @test isapprox(mean(ilmmx), mean(oilmmx))
+        @test isapprox(var(ilmmx), var(oilmmx))
+        @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train))
         @test _is_approx(marginals(ilmmx), marginals(oilmmx))
 
         p_ilmmx = posterior(ilmmx, y_train)
@@ -120,9 +119,9 @@
         pi = p_ilmmx(x_test, 0.1)
         po = p_oilmmx(x_test, 0.1)
 
-        @test isapprox(mean(pi), mean(po); atol=atol)
-        @test isapprox(var(pi), var(po); atol=atol)
-        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test); atol=atol)
+        @test isapprox(mean(pi), mean(po))
+        @test isapprox(var(pi), var(po))
+        @test isapprox(logpdf(pi, y_test), logpdf(po, y_test))
         @test _is_approx(marginals(pi), marginals(po))
 
         @testset "primary_public_interface" begin
