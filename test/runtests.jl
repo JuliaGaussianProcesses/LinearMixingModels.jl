@@ -1,4 +1,7 @@
 using AbstractGPs
+using ChainRules
+using ChainRulesCore
+using ChainRulesTestUtils
 using Distributions
 using Documenter
 using FillArrays
@@ -21,13 +24,21 @@ function _is_approx(x::AbstractVector{<:Normal}, y::AbstractVector{<:Normal})
     return (map(mean, x) ≈ map(mean, y)) && (map(std, x) ≈ map(std, y))
 end
 
+const ad_config = Zygote.ZygoteRuleConfig()
+
+function ChainRulesTestUtils.rand_tangent(
+    rng::AbstractRNG, x::T,
+) where {T<:MOInputIsotopicByOutputs}
+    return Tangent{T}(x=rand_tangent(rng, x.x))
+end
+
 include("test_utils.jl")
 
 @testset "LinearMixingModels.jl" begin
     include("independent_mogp.jl")
-    include("orthogonal_matrix.jl")
-    include("ilmm.jl")
-    include("oilmm.jl")
+    # include("orthogonal_matrix.jl")
+    # include("ilmm.jl")
+    # include("oilmm.jl")
 
     @testset "doctests" begin
         DocMeta.setdocmeta!(

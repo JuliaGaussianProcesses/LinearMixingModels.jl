@@ -44,7 +44,12 @@
     # @test isapprox(mean(fx), vcat(mean(fx1), mean(fx2)))
     # @test isapprox(var(fx), vcat(var(fx1), var(fx2)))
 
+    function _logpdf(y_train, obs_noise)
+        return logpdf(f(x_train_mo, obs_noise), y_train)
+    end
+
     @test Zygote.gradient(logpdf, fx, y_train) isa Tuple
+    test_rrule(Zygote.ZygoteRuleConfig(), _logpdf, y_train, 0.1; rrule_f=ChainRulesCore.rrule_via_ad, output_tangent= randn(), check_inferred=false)
 
     pfx = posterior(fx, y_train)
     pfx1 = posterior(fx1, y_1_train)
