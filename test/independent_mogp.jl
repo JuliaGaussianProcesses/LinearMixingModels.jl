@@ -45,8 +45,6 @@
     @test isapprox(var(fx), vcat(var(fx1), var(fx2)))
     @test length(rand(rng, fx)) == length(f.fs) * length(x_train_mo.x)
 
-    @test Zygote.gradient(logpdf, fx, y_train) isa Tuple
-
     pfx = posterior(fx, y_train)
     pfx1 = posterior(fx1, y_1_train)
     pfx2 = posterior(fx2, y_2_train)
@@ -62,7 +60,6 @@
     @test isapprox(var(post_fx), vcat(var(post_fx1), var(post_fx2)))
     @test length(rand(rng, post_fx)) == length(f.fs) * length(x_test_mo.x)
 
-    @test Zygote.gradient(logpdf, post_fx, y_test) isa Tuple
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, fx)
         test_finitegp_primary_public_interface(rng, post_fx)

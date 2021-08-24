@@ -16,9 +16,6 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     p_ilmmx = posterior(ilmmx, y_train)
     p_n_ilmmx = posterior(n_ilmmx, y_train)
 
-    @test Zygote.gradient(logpdf, ilmmx, y_train) isa Tuple
-    @test Zygote.gradient(logpdf, n_ilmmx, y_train) isa Tuple
-
     pi = p_ilmmx(x_test, 1e-6)
     pni = p_n_ilmmx(x_test, 1e-6)
 
@@ -27,9 +24,6 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     @test isapprox(logpdf(pi, y_test), logpdf(pni, y_test))
     @test _is_approx(marginals(pi), marginals(pni))
     @test length(rand(rng, pi)) == size(H, 1) * length(x_test.x)
-
-    @test Zygote.gradient(logpdf, pi, y_test) isa Tuple
-    @test Zygote.gradient(logpdf, pni, y_test) isa Tuple
 
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, ilmmx)
