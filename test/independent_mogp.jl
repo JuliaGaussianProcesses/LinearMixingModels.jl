@@ -43,6 +43,7 @@
     @test marginals(fx) == vcat(marginals(fx1), marginals(fx2))
     @test isapprox(mean(fx), vcat(mean(fx1), mean(fx2)))
     @test isapprox(var(fx), vcat(var(fx1), var(fx2)))
+    @test length(rand(rng, fx)) == length(f.fs) * length(x_train_mo.x)
 
     pfx = posterior(fx, y_train)
     pfx1 = posterior(fx1, y_1_train)
@@ -57,6 +58,7 @@
     @test marginals(post_fx) == vcat(marginals(post_fx1), marginals(post_fx2))
     @test isapprox(mean(post_fx), vcat(mean(post_fx1), mean(post_fx2)))
     @test isapprox(var(post_fx), vcat(var(post_fx1), var(post_fx2)))
+    @test length(rand(rng, post_fx)) == length(f.fs) * length(x_test_mo.x)
 
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, fx)
