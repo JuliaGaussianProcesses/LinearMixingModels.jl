@@ -1,6 +1,4 @@
 using AbstractGPs
-# using ChainRules
-# using ChainRulesCore
 using Distributions
 using Documenter
 using FillArrays
