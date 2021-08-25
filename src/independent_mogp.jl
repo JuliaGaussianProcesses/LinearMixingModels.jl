@@ -66,9 +66,7 @@ end
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.cov(
-    f::IndependentMOGP,
-    x::MOInputIsotopicByOutputs,
-    y::MOInputIsotopicByOutputs,
+    f::IndependentMOGP, x::MOInputIsotopicByOutputs, y::MOInputIsotopicByOutputs
 )
     Cs = map(f -> cov(f, x.x, y.x), f.fs)
     return Matrix(BlockDiagonal(Cs))
