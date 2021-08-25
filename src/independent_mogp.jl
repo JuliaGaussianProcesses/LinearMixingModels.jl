@@ -61,7 +61,7 @@ end
 # See AbstractGPs.jl API docs.
 function AbstractGPs.cov(f::IndependentMOGP, x::MOInputIsotopicByOutputs)
     Cs = map(f -> cov(f, x.x), f.fs)
-    return collect(BlockDiagonal(Cs))
+    return Matrix(BlockDiagonal(Cs))
 end
 
 # See AbstractGPs.jl API docs.
@@ -71,7 +71,7 @@ function AbstractGPs.cov(
     y::MOInputIsotopicByOutputs,
 )
     Cs = map(f -> cov(f, x.x, y.x), f.fs)
-    return collect(BlockDiagonal(Cs))
+    return Matrix(BlockDiagonal(Cs))
 end
 
 # See AbstractGPs.jl API docs.
