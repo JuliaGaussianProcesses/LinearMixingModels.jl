@@ -81,7 +81,7 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
 
     x_mo_input = MOInputIsotopicByOutputs(x, m)
 
-    latent_rand =  rand(rng, f(x_mo_input, 1e-12))
+    latent_rand = rand(rng, f(x_mo_input, 1e-12))
     ε = randn(rng, length(fx))
     return vec(reshape(latent_rand, length(x), m) * H') + sqrt(σ²) .* ε
 end
