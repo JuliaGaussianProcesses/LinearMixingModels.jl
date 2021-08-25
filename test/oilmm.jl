@@ -25,6 +25,8 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     @test _is_approx(marginals(pi), marginals(po))
     @test length(rand(rng, po)) == size(H, 1) * length(x_test.x)
 
+    test_sampling_consistency(rng, oilmm, x_train)
+
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, oilmmx)
         test_finitegp_primary_public_interface(rng, po)

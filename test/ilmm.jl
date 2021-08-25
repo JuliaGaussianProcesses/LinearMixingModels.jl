@@ -25,6 +25,8 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     @test _is_approx(marginals(pi), marginals(pni))
     @test length(rand(rng, pi)) == size(H, 1) * length(x_test.x)
 
+    test_sampling_consistency(rng, ilmm, x_train)
+
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, ilmmx)
         test_finitegp_primary_public_interface(rng, pi)

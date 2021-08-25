@@ -60,6 +60,8 @@
     @test isapprox(var(post_fx), vcat(var(post_fx1), var(post_fx2)))
     @test length(rand(rng, post_fx)) == length(f.fs) * length(x_test_mo.x)
 
+    test_sampling_consistency(rng, f, x_train_mo)
+
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, fx)
         test_finitegp_primary_public_interface(rng, post_fx)
