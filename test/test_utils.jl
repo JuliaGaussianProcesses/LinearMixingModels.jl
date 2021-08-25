@@ -33,3 +33,16 @@ function generate_toy_data(rng::AbstractRNG)
 
     return x_train, x_test, y_train, y_test
 end
+
+# Posterior should approximately agree with observations samples from the prior, if
+# observed under a sufficiently small amount of noise.
+# Testing for really eggregious bugs, as opposed to numerical issues, so tolerances are
+# quite loose. 
+function test_sampling_consistency(rng, f, x; rtol=1e-2, atol=1e2, σ²=1e-6)
+    fx = f(x, σ²)
+    y = rand(fx)
+    f_post = posterior(fx, y)
+    @test rand(rng, f_post(x, σ²)) ≈ y rtol=rtol
+    @test mean(f_post(x)) ≈ y rtol=rtol
+    @test var(f_post(x)) ≈ zeros(length(y)) rtol=rtol atol=atol
+end
