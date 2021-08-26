@@ -7,7 +7,7 @@ using LinearAlgebra
 using LinearMixingModels
 using Random
 using Test
-using Zygote
+using Zygote: gradient
 
 using AbstractGPs: AbstractGP, FiniteGP
 using AbstractGPs.TestUtils:

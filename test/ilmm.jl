@@ -27,6 +27,9 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
 
     test_sampling_consistency(rng, ilmm, x_train)
 
+    @test gradient(logpdf, ilmmx, y_train) isa Tuple
+    @test gradient(logpdf, pi, y_test) isa Tuple
+
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, ilmmx)
         test_finitegp_primary_public_interface(rng, pi)
@@ -39,8 +42,8 @@ end
 
     @testset "Full Rank, Dense H" begin
         H = rand(3, 3)
-        k1, k2, k3 = SEKernel(), Matern32Kernel(), Matern32Kernel()
-        test_ilmm(rng, [k1, k2, k3], H, x_train, x_test, y_train, y_test)
+        kernels = [SEKernel(), Matern32Kernel(), Matern32Kernel()]
+        test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     end
 
     @testset "M Latent Processes" begin

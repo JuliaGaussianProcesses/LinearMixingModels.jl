@@ -27,6 +27,9 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
 
     test_sampling_consistency(rng, oilmm, x_train)
 
+    @test gradient(logpdf, oilmmx, y_train) isa Tuple
+    @test gradient(logpdf, po, y_test) isa Tuple
+
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, oilmmx)
         test_finitegp_primary_public_interface(rng, po)
