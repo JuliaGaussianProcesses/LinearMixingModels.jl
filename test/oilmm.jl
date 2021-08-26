@@ -11,6 +11,7 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     @test isapprox(var(ilmmx), var(oilmmx))
     @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train))
     @test _is_approx(marginals(ilmmx), marginals(oilmmx))
+    @test length(rand(rng, oilmmx)) == size(H, 1) * length(x_train.x)
 
     p_ilmmx = posterior(ilmmx, y_train)
     p_oilmmx = posterior(oilmmx, y_train)
@@ -22,6 +23,9 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     @test isapprox(var(pi), var(po))
     @test isapprox(logpdf(pi, y_test), logpdf(po, y_test))
     @test _is_approx(marginals(pi), marginals(po))
+    @test length(rand(rng, po)) == size(H, 1) * length(x_test.x)
+
+    test_sampling_consistency(rng, oilmm, x_train)
 
     @testset "primary_public_interface" begin
         test_finitegp_primary_public_interface(rng, oilmmx)

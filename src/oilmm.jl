@@ -44,10 +44,10 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
     U, S = H.U, H.S
 
     # Generate from the latent processes.
-    X = hcat(map(f -> rand(rng, f(x)), fs.fs)...)
+    X = reshape(reduce(vcat, map(f -> rand(rng, f(x)), fs.fs)), length(x), :)
 
     # Transform latents into observed space.
-    F = vec(U * sqrt(S) * X')
+    F = vec((U * sqrt(S) * X')')
 
     # Generate iid noise and add to each output.
     return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))

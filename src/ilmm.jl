@@ -60,7 +60,7 @@ Computes the projection `T` and `ΣT` given the mixing matrix and noise.
 """
 function project(H::AbstractMatrix{Z}, σ²::Z) where {Z<:Real}
     Σ = σ² * I
-    ΣT_inv = H' * inv(Σ) * H
+    ΣT_inv = H' * inv(Σ) * H + 1e-9I
     T = cholesky(Symmetric(ΣT_inv)) \ H' * inv(Σ) # Σ easily invertible, no problem there
     ΣT = T * Σ * T'
 
@@ -81,8 +81,9 @@ function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:ILMM})
 
     x_mo_input = MOInputIsotopicByOutputs(x, m)
 
-    latent_rand =  rand(rng, f(x_mo_input))
-    return vec(H * reshape(latent_rand, :, length(x)))
+    latent_rand = rand(rng, f(x_mo_input, 1e-12))
+    ε = randn(rng, length(fx))
+    return vec(reshape(latent_rand, length(x), m) * H') + sqrt(σ²) .* ε
 end
 
 # See AbstractGPs.jl API docs.
