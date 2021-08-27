@@ -16,11 +16,9 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://invenia.github.io/LinearMixingModels.jl",
-        assets="assets/invenia.css",
+        assets=["assets/invenia.css"],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md",],
     checkdocs=:exports,
     strict=true,
 )
