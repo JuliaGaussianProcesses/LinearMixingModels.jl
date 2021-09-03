@@ -7,6 +7,7 @@ using Distributions
 using FillArrays
 using KernelFunctions
 using LinearAlgebra
+using PDMatsExtras
 using Random
 using Statistics
 
