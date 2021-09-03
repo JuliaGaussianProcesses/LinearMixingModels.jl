@@ -4,8 +4,13 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     ilmm = ILMM(fs, collect(H))
     oilmm = ILMM(fs, H)
 
-    ilmmx = ilmm(x_train, 0.1)
-    oilmmx = oilmm(x_train, 0.1)
+    D = Diagonal(rand(rng, size(H, 2)))
+    Σy = oilmm_noise_covariance(oilmm, x_train, D, 0.1)
+
+    ilmmx = ilmm(x_train, collect(Σy))
+    oilmmx = oilmm(x_train, Σy)
+
+    @test oilmmx isa LinearMixingModels.FiniteOILMM
 
     @test isapprox(mean(ilmmx), mean(oilmmx))
     @test isapprox(var(ilmmx), var(oilmmx))
@@ -70,18 +75,18 @@ end
         test_oilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     end
 
-    @testset "M Latent Processes" begin
-        U, S, _ = svd(rand(rng, 3, 2))
-        H = Orthogonal(U, Diagonal(S))
-        kernels = [SEKernel(), Matern32Kernel()]
-        test_oilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
-    end
+    # @testset "M Latent Processes" begin
+    #     U, S, _ = svd(rand(rng, 3, 2))
+    #     H = Orthogonal(U, Diagonal(S))
+    #     kernels = [SEKernel(), Matern32Kernel()]
+    #     test_oilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
+    # end
 
-    @testset "1 Latent Processes" begin
-        U, S, _ = svd(rand(rng, 3, 1))
-        H = Orthogonal(U, Diagonal(S))
-        kernels = [SEKernel()]
-        test_oilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
-    end
+    # @testset "1 Latent Processes" begin
+    #     U, S, _ = svd(rand(rng, 3, 1))
+    #     H = Orthogonal(U, Diagonal(S))
+    #     kernels = [SEKernel()]
+    #     test_oilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
+    # end
 end
 @info "Ran oilmm tests."

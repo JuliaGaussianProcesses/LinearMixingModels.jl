@@ -32,6 +32,17 @@ function Base.size(X::OILMMNoiseCovarianceMatrix)
     return (num_variables, num_variables)
 end
 
+function Base.collect(X::OILMMNoiseCovarianceMatrix{T}) where {T}
+    return kron(X.H * X.D * X.H' + X.σ² * I, Matrix{T}(I, X.num_features, X.num_features))
+end
+
+
+
+# Doing all of this is harder than it initially seems, because it requires that you also do
+# it for the ILMM. This creates a number of additional possibilities that seem reasonable
+# to account for (e.g. not using the same matrix in both cases).
+# This means that the complexity of the possibilities increases substantially, and more
+# general solutions must be accounted for.
 """
     oilmm_noise_covariance(
         f::OILMM, x::MOInputIsotopicByOutputs, D::Diagonal, σ²::Real,
@@ -56,19 +67,35 @@ function oilmm_noise_covariance(f::OILMM, x::MOInputIsotopicByOutputs, σ²::Rea
     return oilmm_noise_covariance(f, x, D, σ²)
 end
 
+(f::OILMM)(x::AbstractVector, σ²::Real) = f(x, oilmm_noise_covariance(f, x, σ²))
+
+const FiniteOILMM = FiniteGP{<:OILMM, <:AbstractVector, <:OILMMNoiseCovarianceMatrix}
+
+function unpack(fx::FiniteOILMM)
+    f = fx.f.f
+    H = fx.f.H
+    D = fx.Σy.D
+    σ² = fx.Σy.σ²
+    x = fx.x.x
+
+    # Check that the number of outputs requested agrees with the model.
+    fx.x.out_dim == size(H, 1) || throw(error("out dim of x != out dim of f."))
+    return f, H, D, σ², x
+end
+
 """
     project(H, σ²)
 
 Computes the projection `T` and `ΣT` given the mixing matrix and noise.
 """
-function project(H::Orthogonal{Z}, σ²::Z) where {Z<:Real}
+function project(H::Orthogonal{V}, D::Diagonal{V}, σ²::V) where {V<:Real}
     U, S = H.U, H.S
 
     # Compute the projection of the data.
     T = sqrt(S) \ U'
 
     # Compute the projected noise, which is a matrix of size `size(Yproj)`.
-    ΣT = diag(σ² * inv(S))
+    ΣT = diag(σ² * inv(S)) + diag(D)
 
     return T, ΣT
 end
@@ -81,28 +108,27 @@ Follows the AbstractGPs.jl API.
 See also `rand_latent`.
 [1] - Bruinsma et al 2020.
 """
-function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteGP{<:OILMM})
-    fs, H, σ², x = unpack(fx)
-
-    # Obtain U and S
-    U, S = H.U, H.S
+function AbstractGPs.rand(rng::AbstractRNG, fx::FiniteOILMM)
+    fs, H, D, σ², x = unpack(fx)
 
     # Generate from the latent processes.
-    X = reshape(reduce(vcat, map(f -> rand(rng, f(x)), fs.fs)), length(x), :)
+    latent_samples = map((f, d) -> rand(rng, f(x, d)), fs.fs, diag(D))
+    X = reshape(reduce(vcat, latent_samples), length(x), :)
 
     # Transform latents into observed space.
-    F = vec((U * sqrt(S) * X')')
+    F = vec((H.U * sqrt(H.S) * X')')
 
     # Generate iid noise and add to each output.
-    return F .+ sqrt(noise_var(fx.Σy)) .* randn(rng, size(F))
+    return F .+ sqrt(σ²) .* randn(rng, size(F))
 end
 
 # See AbstractGPs.jl API docs.
-function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
-    fs, H, σ², x = unpack(fx)
+function AbstractGPs.mean_and_var(fx::FiniteOILMM)
+    fs, H, D, σ², x = unpack(fx)
 
     # Compute the marginals over the independent latents.
-    fs_marginals = reduce(hcat, map(f -> AbstractGPs.marginals(f(x)), fs.fs))
+    latent_marginals = map((f, d) -> AbstractGPs.marginals(f(x, d)), fs.fs, diag(D))
+    fs_marginals = reduce(hcat, latent_marginals)
     M_latent = mean.(fs_marginals)'
     V_latent = var.(fs_marginals)'
 
@@ -120,12 +146,12 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:OILMM})
 end
 
 # See AbstractGPs.jl API docs.
-function AbstractGPs.logpdf(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
-    fs, H, σ², x = unpack(fx)
+function AbstractGPs.logpdf(fx::FiniteOILMM, y::AbstractVector{<:Real})
+    fs, H, D, σ², x = unpack(fx)
 
     # Projection step.
     Y = reshape_y(y, length(x))
-    T, ΣT = project(H, σ²)
+    T, ΣT = project(H, D, σ²)
     Ty = T*Y
 
     # Latent process log marginal likelihood calculation.
@@ -157,12 +183,14 @@ function regulariser(
 end
 
 # See AbstractGPs.jl API docs.
-function AbstractGPs.posterior(fx::FiniteGP{<:OILMM}, y::AbstractVector{<:Real})
-    fs, H, σ², x = unpack(fx)
+function AbstractGPs.posterior(
+    fx::FiniteOILMM, y::AbstractVector{<:Real},
+)
+    fs, H, D, σ², x = unpack(fx)
 
     # Projection step.
     Y = reshape_y(y, length(x))
-    T, ΣT = project(H, σ²)
+    T, ΣT = project(H, D, σ²)
     Ty = T*Y
 
     # Condition each latent process on the projected observations.
