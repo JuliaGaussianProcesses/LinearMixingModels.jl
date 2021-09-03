@@ -105,8 +105,7 @@ function Distributions._rand!(
     end
 end
 
-# See AbstractGPs.jl API docs.
-function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
+function _intermediate_mean_and_var_and_cov_quantities(fx::FiniteGP{<:ILMM})
     f, H, σ², x = unpack(fx)
     p, m = size(H)
     n = length(x)
@@ -116,6 +115,12 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
     latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
 
     H_full = kron(H, Matrix(I, n, n))
+    return H_full, latent_mean, latent_cov, σ²
+end
+
+# See AbstractGPs.jl API docs.
+function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
+    H_full, latent_mean, latent_cov, σ² = _intermediate_mean_and_var_and_cov_quantities(fx)
 
     M = H_full * latent_mean
     V = AbstractGPs.diag_Xt_A_X(cholesky(latent_cov), H_full') .+ σ²
@@ -124,28 +129,20 @@ function AbstractGPs.mean_and_var(fx::FiniteGP{<:ILMM})
 end
 
 # See AbstractGPs.jl API docs.
-AbstractGPs.mean(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[1]
-
-# See AbstractGPs.jl API docs.
-AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
-
-# See AbstractGPs.jl API docs.
 function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
-    f, H, σ², x = unpack(fx)
-    p, m = size(H)
-    n = length(x)
-
-    x_mo_input = MOInputIsotopicByOutputs(x, m)
-
-    latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
-
-    H_full = kron(H, Matrix(I, n, n))
+    H_full, latent_mean, latent_cov, σ² = _intermediate_mean_and_var_and_cov_quantities(fx)
 
     M = H_full * latent_mean
     C = AbstractGPs.Xt_A_X(cholesky(latent_cov), H_full') .+ σ²
 
     return collect(vec(M)), C
 end
+
+# See AbstractGPs.jl API docs.
+AbstractGPs.mean(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[1]
+
+# See AbstractGPs.jl API docs.
+AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
 
 AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = mean_and_cov(fx)[2]
 
