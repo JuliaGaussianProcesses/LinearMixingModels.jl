@@ -4,11 +4,11 @@ using AbstractGPs
 using BlockDiagonals: BlockDiagonal
 using ChainRulesCore: @non_differentiable
 using Distributions
+using FillArrays
 using KernelFunctions
 using LinearAlgebra
 using Random
 using Statistics
-using FillArrays
 
 using AbstractGPs: AbstractGP, FiniteGP
 using KernelFunctions: MOInputIsotopicByOutputs
