@@ -13,6 +13,50 @@ as the latent processes remain decoupled.
 const OILMM = ILMM{<:IndependentMOGP, <:Orthogonal}
 
 """
+    OILMMNoiseCovarianceMatrix
+
+A covariance matrix specifically designed to work with an OILMM.
+Please construct using [`oilmm_noise_covariance`](@ref) to ensure correctness.
+"""
+struct OILMMNoiseCovarianceMatrix{
+    T, TH<:Orthogonal{T}, TD<:Diagonal{T},
+} <: AbstractMatrix{T}
+    H::TH
+    D::TD
+    σ²::T
+    num_features::Int
+end
+
+function Base.size(X::OILMMNoiseCovarianceMatrix)
+    num_variables = X.num_features * size(X.H, 1)
+    return (num_variables, num_variables)
+end
+
+"""
+    oilmm_noise_covariance(
+        f::OILMM, x::MOInputIsotopicByOutputs, D::Diagonal, σ²::Real,
+    )
+
+Build the observation noise associated with an `f` at a particular set of inputs.
+"""
+function oilmm_noise_covariance(
+    f::OILMM, x::MOInputIsotopicByOutputs, D::Diagonal, σ²::Real,
+)
+    return OILMMNoiseCovarianceMatrix(f.H, D, σ², length(x.x))
+end
+
+"""
+    oilmm_noise_covariance(f::OILMM, x::MOInputIsotopicByOutputs, σ²::Real)
+
+Build the observation noise associated with an `f` at a particular set of inputs, with
+`D` set to zero.
+"""
+function oilmm_noise_covariance(f::OILMM, x::MOInputIsotopicByOutputs, σ²::Real)
+    D = Diagonal(Fill(zero(σ²), size(f.H, 2)))
+    return oilmm_noise_covariance(f, x, D, σ²)
+end
+
+"""
     project(H, σ²)
 
 Computes the projection `T` and `ΣT` given the mixing matrix and noise.

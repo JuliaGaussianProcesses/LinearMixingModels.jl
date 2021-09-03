@@ -37,6 +37,29 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
 end
 
 @testset "oilmm" begin
+
+    @testset "OILMMNoiseCovariance" begin
+        dim_obs = 3
+        dim_latent = 2
+        num_features = 5
+
+        U, s, _ = svd(randn(dim_obs, dim_latent))
+        S = Diagonal(s)
+        H = Orthogonal(U, S)
+        D = Diagonal(rand(dim_latent) .+ 1)
+        σ² = rand() + 1
+
+        f = ILMM(independent_mogp(map(GP, [SEKernel(), SEKernel()])), H)
+        x = MOInputIsotopicByOutputs(randn(num_features), dim_obs)
+        Σy = oilmm_noise_covariance(f, x, D, σ²)
+
+        @test size(Σy) == (num_features * dim_obs, num_features * dim_obs)
+
+        Σy_zero_D = oilmm_noise_covariance(f, x, σ²)
+        @test size(Σy) == (num_features * dim_obs, num_features * dim_obs)
+        @test iszero(Σy_zero_D.D)
+    end
+
     rng = Random.seed!(04161999)
     x_train, x_test, y_train, y_test = generate_toy_data(rng)
 
