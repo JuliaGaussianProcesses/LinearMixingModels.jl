@@ -31,8 +31,8 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     @test gradient(logpdf, po, y_test) isa Tuple
 
     @testset "primary_public_interface" begin
-        test_finitegp_primary_public_interface(rng, oilmmx)
-        test_finitegp_primary_public_interface(rng, po)
+        test_finitegp_primary_and_secondary_public_interface(rng, oilmmx)
+        test_finitegp_primary_and_secondary_public_interface(rng, po)
     end
 end
 

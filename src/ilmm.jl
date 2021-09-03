@@ -130,6 +130,26 @@ AbstractGPs.mean(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[1]
 AbstractGPs.var(fx::FiniteGP{<:ILMM}) = mean_and_var(fx)[2]
 
 # See AbstractGPs.jl API docs.
+function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
+    f, H, σ², x = unpack(fx)
+    p, m = size(H)
+    n = length(x)
+
+    x_mo_input = MOInputIsotopicByOutputs(x, m)
+
+    latent_mean, latent_cov = mean_and_cov(f(x_mo_input))
+
+    H_full = kron(H, Matrix(I, n, n))
+
+    M = H_full * latent_mean
+    C = AbstractGPs.Xt_A_X(cholesky(latent_cov), H_full') .+ σ²
+
+    return collect(vec(M)), C
+end
+
+AbstractGPs.cov(fx::FiniteGP{<:ILMM}) = mean_and_cov(fx)[2]
+
+# See AbstractGPs.jl API docs.
 function AbstractGPs.logpdf(fx::FiniteGP{<:ILMM}, y::AbstractVector{<:Real})
     f, H, σ², x = unpack(fx)
     p, m = size(H)

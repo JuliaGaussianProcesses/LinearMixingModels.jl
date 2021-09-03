@@ -31,8 +31,8 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     @test gradient(logpdf, pi, y_test) isa Tuple
 
     @testset "primary_public_interface" begin
-        test_finitegp_primary_public_interface(rng, ilmmx)
-        test_finitegp_primary_public_interface(rng, pi)
+        test_finitegp_primary_and_secondary_public_interface(rng, ilmmx)
+        test_finitegp_primary_and_secondary_public_interface(rng, pi)
     end
 end
 
