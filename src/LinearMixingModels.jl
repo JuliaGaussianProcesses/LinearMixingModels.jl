@@ -7,7 +7,6 @@ using Distributions
 using FillArrays
 using KernelFunctions
 using LinearAlgebra
-using PDMatsExtras
 using Random
 using Statistics
 
@@ -23,5 +22,6 @@ export ILMM
 export IndependentMOGP, independent_mogp
 export Orthogonal, OILMM
 export get_latent_gp
+export oilmm_noise_covariance
 
 end
