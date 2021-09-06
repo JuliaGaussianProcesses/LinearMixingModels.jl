@@ -9,6 +9,7 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
 
     @test isapprox(mean(ilmmx), mean(n_ilmmx))
     @test isapprox(var(ilmmx), var(n_ilmmx))
+    @test isapprox(cov(ilmmx), cov(n_ilmmx))
     @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train))
     @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
     @test length(rand(rng, ilmmx)) == size(H, 1) * length(x_train.x)

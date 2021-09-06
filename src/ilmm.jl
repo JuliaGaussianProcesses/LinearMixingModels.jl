@@ -133,7 +133,7 @@ function AbstractGPs.mean_and_cov(fx::FiniteGP{<:ILMM})
     H_full, latent_mean, latent_cov, σ² = _intermediate_mean_and_var_and_cov_quantities(fx)
 
     M = H_full * latent_mean
-    C = AbstractGPs.Xt_A_X(cholesky(latent_cov), H_full') .+ σ²
+    C = AbstractGPs.Xt_A_X(cholesky(latent_cov), H_full') + σ² * I
 
     return collect(vec(M)), C
 end
