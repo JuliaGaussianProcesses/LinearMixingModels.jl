@@ -9,6 +9,7 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
 
     @test isapprox(mean(ilmmx), mean(n_ilmmx))
     @test isapprox(var(ilmmx), var(n_ilmmx))
+    @test isapprox(cov(ilmmx), cov(n_ilmmx))
     @test isapprox(logpdf(ilmmx, y_train), logpdf(n_ilmmx, y_train))
     @test _is_approx(marginals(ilmmx), marginals(n_ilmmx))
     @test length(rand(rng, ilmmx)) == size(H, 1) * length(x_train.x)
@@ -31,8 +32,8 @@ function test_ilmm(rng, kernels, H, x_train, x_test, y_train, y_test)
     @test gradient(logpdf, pi, y_test) isa Tuple
 
     @testset "primary_public_interface" begin
-        test_finitegp_primary_public_interface(rng, ilmmx)
-        test_finitegp_primary_public_interface(rng, pi)
+        test_finitegp_primary_and_secondary_public_interface(rng, ilmmx)
+        test_finitegp_primary_and_secondary_public_interface(rng, pi)
     end
 end
 

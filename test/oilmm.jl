@@ -9,6 +9,7 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
 
     @test isapprox(mean(ilmmx), mean(oilmmx))
     @test isapprox(var(ilmmx), var(oilmmx))
+    @test isapprox(cov(ilmmx), cov(oilmmx))
     @test isapprox(logpdf(ilmmx, y_train), logpdf(oilmmx, y_train))
     @test _is_approx(marginals(ilmmx), marginals(oilmmx))
     @test length(rand(rng, oilmmx)) == size(H, 1) * length(x_train.x)
@@ -31,8 +32,8 @@ function test_oilmm(rng, kernels, H::Orthogonal, x_train, x_test, y_train, y_tes
     @test gradient(logpdf, po, y_test) isa Tuple
 
     @testset "primary_public_interface" begin
-        test_finitegp_primary_public_interface(rng, oilmmx)
-        test_finitegp_primary_public_interface(rng, po)
+        test_finitegp_primary_and_secondary_public_interface(rng, oilmmx)
+        test_finitegp_primary_and_secondary_public_interface(rng, po)
     end
 end
 
