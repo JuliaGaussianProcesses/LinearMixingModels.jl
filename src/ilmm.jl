@@ -4,7 +4,7 @@
 An Instantaneous Linear Mixing Model (ILMM) -- a distribution over vector-
 valued functions. Let `p` be the number of observed outputs, and `m` the number of latent
 processes, then `H`, also known as the mixing matrix, is a `p x m` matrix whose column
-space spans the output space. The latent processes are represented a Gaussian process `f`.
+space spans the output space. `H` "mixes" a latent multi-output AbstractGP `f`.
 
 # Arguments:
 - f: a multi-output AbstractGP with `m` outputs.
