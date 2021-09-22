@@ -10,10 +10,7 @@ space spans the output space. `H` "mixes" a latent multi-output AbstractGP `f`.
 - f: a multi-output AbstractGP with `m` outputs.
 - H: a `p x m` matrix representing a fixed basis of our p-dim target: h_1,...,h_m
 """
-struct ILMM{
-    Tf<:AbstractGP,
-    TH<:AbstractMatrix{<:Real}
-} <: AbstractGP
+struct ILMM{Tf<:AbstractGP,TH<:AbstractMatrix{<:Real}} <: AbstractGP
     f::Tf
     H::TH
 end
