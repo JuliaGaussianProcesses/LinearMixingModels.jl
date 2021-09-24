@@ -145,8 +145,8 @@ function reorder_by_outputs(fx::IsotropicByFeaturesFiniteIndependentMOGP)
     return FiniteGP(fx.f, reorder_by_outputs(fx.x), fx.Σy)
 end
 
-ChainRulesCore.@non_differentiable reorder_features_to_outputs_indices(::Any)
-ChainRulesCore.@non_differentiable reorder_by_outputs(::Any)
+@non_differentiable reorder_features_to_outputs_indices(::Any)
+@non_differentiable reorder_by_outputs(::Any)
 
 function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:MOInputIsotopicByFeatures}, σ²::Real)
     return [f(fx.x.x, σ²) for f in fx.f.fs]
@@ -169,6 +169,17 @@ function AbstractGPs.cov(f::IndependentMOGP, x::MOInputIsotopicByFeatures)
     C_by_outputs = cov(f, x_by_outputs)
     idx = reorder_features_to_outputs_indices(x_by_outputs)
     return C_by_outputs[idx, idx]
+end
+
+function AbstractGPs.cov(
+    f::IndependentMOGP, x::MOInputIsotopicByFeatures, y::MOInputIsotopicByFeatures,
+)
+    x_by_outputs = reorder_by_outputs(x)
+    y_by_outputs = reorder_by_outputs(y)
+    C_by_outputs = cov(f, x_by_outputs, y_by_outputs)
+    idx_x = reorder_features_to_outputs_indices(x_by_outputs)
+    idx_y = reorder_features_to_outputs_indices(y_by_outputs)
+    return C_by_outputs[idx_x, idx_y]
 end
 
 function AbstractGPs.rand(rng::AbstractRNG, ft::IsotropicByFeaturesFiniteIndependentMOGP)

@@ -94,10 +94,11 @@
         fx_naive = f_naive(x, Σy)
 
         approx_equivalent(rng, fx, fx_naive)
-        # approx_equivalent(posterior(fx, y)(x, Σy), posterior(fx_naive, y)(x, Σy))
+        y = rand(rng, fx)
+        approx_equivalent(rng, posterior(fx, y)(x, Σy), posterior(fx_naive, y)(x, Σy))
 
-        # # Ensure self-consistency.
-        # test_finitegp_primary_and_secondary_public_interface(rng, fx)
+        # Ensure self-consistency.
+        test_finitegp_primary_and_secondary_public_interface(rng, fx)
     end
 end
 
