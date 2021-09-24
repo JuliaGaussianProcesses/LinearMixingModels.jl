@@ -41,7 +41,7 @@ function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:MOInputIsotopicByOutputs},
 end
 
 const IsotropicByOutputsFiniteIndependentMOGP = FiniteGP{
-    <:IndependentMOGP, <:MOInputIsotopicByOutputs, <:Diagonal{<:Real, <:Fill},
+    <:IndependentMOGP,<:MOInputIsotopicByOutputs,<:Diagonal{<:Real,<:Fill}
 }
 
 # Optimisations for MOInputIsotopicByOutputs.
@@ -88,7 +88,7 @@ AbstractGPs.rand(ft::FiniteGP{<:IndependentMOGP}) = rand(Random.GLOBAL_RNG, ft)
 
 # See AbstractGPs.jl API docs.
 function AbstractGPs.rand(
-    rng::AbstractRNG, ft::IsotropicByOutputsFiniteIndependentMOGP, N::Int,
+    rng::AbstractRNG, ft::IsotropicByOutputsFiniteIndependentMOGP, N::Int
 )
     return reduce(hcat, [rand(rng, ft) for _ in 1:N])
 end
@@ -123,11 +123,10 @@ function AbstractGPs.posterior(
     return independent_mogp(ind_posts)
 end
 
-
 # AbstractGPs APIs implementations for MOInputIsotopicByFeatures.
 
 const IsotropicByFeaturesFiniteIndependentMOGP = FiniteGP{
-    <:IndependentMOGP, <:MOInputIsotopicByFeatures, <:Diagonal{<:Real, <:Fill},
+    <:IndependentMOGP,<:MOInputIsotopicByFeatures,<:Diagonal{<:Real,<:Fill}
 }
 
 function reorder_features_to_outputs_indices(x::MOInputIsotopicByOutputs)
@@ -148,7 +147,7 @@ end
 @non_differentiable reorder_features_to_outputs_indices(::Any)
 @non_differentiable reorder_by_outputs(::Any)
 
-function finite_gps(fx::FiniteGP{<:IndependentMOGP, <:MOInputIsotopicByFeatures}, σ²::Real)
+function finite_gps(fx::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures}, σ²::Real)
     return [f(fx.x.x, σ²) for f in fx.f.fs]
 end
 
@@ -172,7 +171,7 @@ function AbstractGPs.cov(f::IndependentMOGP, x::MOInputIsotopicByFeatures)
 end
 
 function AbstractGPs.cov(
-    f::IndependentMOGP, x::MOInputIsotopicByFeatures, y::MOInputIsotopicByFeatures,
+    f::IndependentMOGP, x::MOInputIsotopicByFeatures, y::MOInputIsotopicByFeatures
 )
     x_by_outputs = reorder_by_outputs(x)
     y_by_outputs = reorder_by_outputs(y)
@@ -188,7 +187,7 @@ function AbstractGPs.rand(rng::AbstractRNG, ft::IsotropicByFeaturesFiniteIndepen
 end
 
 function AbstractGPs.logpdf(
-    ft::IsotropicByFeaturesFiniteIndependentMOGP, y::AbstractVector{<:Real},
+    ft::IsotropicByFeaturesFiniteIndependentMOGP, y::AbstractVector{<:Real}
 )
     return logpdf(reorder_by_outputs(ft), y[reorder_features_to_outputs_indices(ft.x)])
 end
