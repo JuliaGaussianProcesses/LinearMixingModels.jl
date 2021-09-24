@@ -7,6 +7,7 @@ processes, then `H`, also known as the mixing matrix, is a `p x m` matrix whose 
 space spans the output space. Given a sample from `f`, the value of the ILMM at any input `x` for all outputs is
 ```julia
 H * [f((x, 1)), f((x, 2)), ..., f((x, m))]
+```
 
 # Arguments:
 - f: a multi-output AbstractGP with `m` outputs.
