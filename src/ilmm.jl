@@ -1,19 +1,19 @@
 """
-    ILMM(fs, H)
+    ILMM(f, H)
+
 An Instantaneous Linear Mixing Model (ILMM) -- a distribution over vector-
 valued functions. Let `p` be the number of observed outputs, and `m` the number of latent
 processes, then `H`, also known as the mixing matrix, is a `p x m` matrix whose column
-space spans the output space. The latent processes are represented a Gaussian process `f`.
+space spans the output space. Given a sample from `f`, the value of the ILMM at any input `x` for all outputs is
+```julia
+H * [f((x, 1)), f((x, 2)), ..., f((x, m))]
+```
 
 # Arguments:
-- fs: a length-`m` vector of Gaussian process objects from AbstractGPs.jl.
+- f: a multi-output AbstractGP with `m` outputs.
 - H: a `p x m` matrix representing a fixed basis of our p-dim target: h_1,...,h_m
-
 """
-struct ILMM{
-    Tf<:AbstractGP,
-    TH<:AbstractMatrix{<:Real}
-} <: AbstractGP
+struct ILMM{Tf<:AbstractGP,TH<:AbstractMatrix{<:Real}} <: AbstractGP
     f::Tf
     H::TH
 end
