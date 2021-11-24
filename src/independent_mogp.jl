@@ -73,7 +73,7 @@ function AbstractGPs.cov(
 end
 
 # See AbstractGPs.jl API docs.
-function AbstractGPs.logpdf(ft::IsotropicFiniteIndependentMOGP, y::AbstractVector)
+function AbstractGPs.logpdf(ft::IsotropicFiniteIndependentMOGP, y::AbstractVector{<:Real})
     finiteGPs = finite_gps(ft, ft.Σy[1])
     ys = collect(eachcol(reshape(y, (length(ft.x.x), :))))
     return sum(map(logpdf, finiteGPs, ys))
