@@ -185,6 +185,24 @@ function AbstractGPs.cov(
     return C_by_outputs[idx_x, idx_y]
 end
 
+function AbstractGPs.cov(
+    f::IndependentMOGP, x::MOInputIsotopicByFeatures, y::MOInputIsotopicByOutputs
+)
+    x_by_outputs = reorder_by_outputs(x)
+    C_by_outputs = cov(f, x_by_outputs, y)
+    idx_x = reorder_features_to_outputs_indices(x_by_outputs)
+    return C_by_outputs[idx_x, :]
+end
+
+function AbstractGPs.cov(
+    f::IndependentMOGP, x::MOInputIsotopicByOutputs, y::MOInputIsotopicByFeatures
+)
+    y_by_outputs = reorder_by_outputs(y)
+    C_by_outputs = cov(f, x, y_by_outputs)
+    idx_y = reorder_features_to_outputs_indices(y_by_outputs)
+    return C_by_outputs[:, idx_y]
+end
+
 function AbstractGPs.rand(rng::AbstractRNG, ft::IsotropicByFeaturesFiniteIndependentMOGP)
     finiteGPs = finite_gps(ft, ft.Σy[1])
     return vec(reduce(hcat, map(fx -> rand(rng, fx), finiteGPs))')

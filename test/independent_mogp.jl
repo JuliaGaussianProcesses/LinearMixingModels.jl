@@ -76,7 +76,7 @@
     @testset "MOInputIsotopicByFeatures" begin
 
         # Inputs are isotopic and grouped by feature.
-        x = MOInputIsotopicByFeatures(randn(3), 2)
+        x = MOInputIsotopicByFeatures(collect(range(0.0, 2.0; length=2)), 2)
 
         # Build a test case.
         rng = MersenneTwister(123456)
@@ -95,6 +95,11 @@
 
         # Ensure self-consistency.
         test_finitegp_primary_and_secondary_public_interface(rng, fx)
+
+        # Mix of by-features and by-outputs should also work efficiently.
+        y = MOInputIsotopicByOutputs(collect(range(0.0, 3.0; length=4)), 2)
+        test_internal_abstractgps_interface(rng, f, x, y)
+        test_internal_abstractgps_interface(rng, f, y, x)
     end
 end
 
