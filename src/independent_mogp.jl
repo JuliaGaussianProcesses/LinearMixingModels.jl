@@ -133,7 +133,7 @@ const IsotropicByFeaturesFiniteIndependentMOGP = FiniteGP{
 
 # Indices which, when applied to a vector ordered by features, will order it by outputs.
 function reorder_features_to_outputs_indices(x::MOInputIsotopicByOutputs)
-    return sortperm(vec(reshape(1:length(x), x.out_dim, length(x.x))'))
+    return collect(vec(reshape(1:length(x), length(x.x), x.out_dim)'))
 end
 
 # Indices which, when applied to a vector ordered by outputs, will order it by features.
