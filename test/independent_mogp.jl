@@ -96,10 +96,14 @@
         # Ensure self-consistency.
         test_finitegp_primary_and_secondary_public_interface(rng, fx)
 
-        # Mix of by-features and by-outputs should also work efficiently.
-        y = MOInputIsotopicByOutputs(collect(range(0.0, 3.0; length=4)), 2)
-        test_internal_abstractgps_interface(rng, f, x, y)
-        test_internal_abstractgps_interface(rng, f, y, x)
+        # Mix of by-features and by-outputs should also work.
+        x′ = MOInputIsotopicByOutputs(collect(range(0.0, 3.0; length=4)), 2)
+        test_internal_abstractgps_interface(rng, f, x, x′)
+        test_internal_abstractgps_interface(rng, f, x′, x)
+
+        # Check that the covariance is computed correctly.
+        @test cov(f, x, x′) ≈ cov(f_naive, x, x′)
+        @test cov(f, x′, x) ≈ cov(f_naive, x′, x)
     end
 end
 
