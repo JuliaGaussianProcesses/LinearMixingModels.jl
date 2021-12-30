@@ -206,7 +206,7 @@ function AbstractGPs.rand(rng::AbstractRNG, ft::IsotropicByFeaturesFiniteIndepen
 end
 
 function AbstractGPs.logpdf(
-    ft::FiniteGP{<:IndependentMOGP, <:MOInputIsotopicByFeatures}, y::AbstractVector{<:Real}
+    ft::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures}, y::AbstractVector{<:Real}
 )
     return logpdf(
         reorder_by_outputs(ft), y[indices_which_reorder_features_to_outputs(ft.x)]
