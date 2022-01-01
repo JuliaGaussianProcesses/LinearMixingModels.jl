@@ -46,3 +46,14 @@ function test_sampling_consistency(rng, f, x; rtol=1e-2, atol=1e2, σ²=1e-6)
     @test mean(f_post(x)) ≈ y rtol = rtol
     @test var(f_post(x)) ≈ zeros(length(y)) rtol = rtol atol = atol
 end
+
+function approx_equivalent(rng::AbstractRNG, fx1::FiniteGP, fx2::FiniteGP)
+    @test length(fx1) == length(fx2)
+
+    @test mean(fx1) ≈ mean(fx2)
+    @test var(fx1) ≈ var(fx2)
+    @test cov(fx1) ≈ cov(fx2)
+
+    y = rand(rng, fx1)
+    @test logpdf(fx1, y) ≈ logpdf(fx2, y)
+end

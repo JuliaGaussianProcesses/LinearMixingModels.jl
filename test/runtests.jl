@@ -14,7 +14,7 @@ using AbstractGPs.TestUtils:
     test_finitegp_primary_public_interface,
     test_finitegp_primary_and_secondary_public_interface,
     test_internal_abstractgps_interface
-using KernelFunctions: MOInputIsotopicByOutputs
+using KernelFunctions: MOInputIsotopicByOutputs, MOInputIsotopicByFeatures
 using LinearMixingModels: unpack, noise_var, get_latent_gp, reshape_y
 
 function _is_approx(x::AbstractVector{<:Normal}, y::AbstractVector{<:Normal})
