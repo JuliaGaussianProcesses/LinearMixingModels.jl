@@ -87,15 +87,15 @@
         # Build an equivalent naive version of the GP and compare against it.
         f_naive = GP(LinearMixingModelKernel(kernels, Matrix{Float64}(I, 2, 2)))
 
-        # Construct different noise models to work with.
-        Σy_iso = 0.1
-        Σy_diag = Diagonal(ones(length(x)) + rand(length(x)))
-        Σy_dense = let
-            A = randn(length(x), length(x))
-            Symmetric(A'A + I)
-        end
-
-        @testset "$(typeof(Σy))" for Σy in [Σy_iso, Σy_diag, Σy_dense]
+        # Test under various kinds of observation covariance matrix.
+        @testset "$(typeof(Σy))" for Σy in [
+            0.1,
+            Diagonal(ones(length(x)) + rand(length(x))),
+            let
+                A = randn(length(x), length(x))
+                Symmetric(A'A + I)
+            end,
+        ]
             fx = f(x, Σy)
             fx_naive = f_naive(x, Σy)
 
