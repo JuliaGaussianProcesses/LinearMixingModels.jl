@@ -82,7 +82,6 @@
         rng = MersenneTwister(123456)
         kernels = [SEKernel(), 0.5 * LinearKernel()]
         f = IndependentMOGP(map(GP, kernels))
-        Σy = 0.1
 
         # Build an equivalent naive version of the GP and compare against it.
         f_naive = GP(LinearMixingModelKernel(kernels, Matrix{Float64}(I, 2, 2)))
