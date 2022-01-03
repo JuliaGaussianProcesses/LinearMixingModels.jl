@@ -83,18 +83,29 @@
         kernels = [SEKernel(), 0.5 * LinearKernel()]
         f = IndependentMOGP(map(GP, kernels))
         Σy = 0.1
-        fx = f(x, Σy)
 
         # Build an equivalent naive version of the GP and compare against it.
         f_naive = GP(LinearMixingModelKernel(kernels, Matrix{Float64}(I, 2, 2)))
-        fx_naive = f_naive(x, Σy)
 
-        approx_equivalent(rng, fx, fx_naive)
-        y = rand(rng, fx)
-        approx_equivalent(rng, posterior(fx, y)(x, Σy), posterior(fx_naive, y)(x, Σy))
+        # Construct different noise models to work with.
+        Σy_iso = 0.1
+        Σy_diag = Diagonal(ones(length(x)) + rand(length(x)))
+        Σy_dense = let
+            A = randn(length(x), length(x))
+            Symmetric(A'A + I)
+        end
 
-        # Ensure self-consistency.
-        test_finitegp_primary_and_secondary_public_interface(rng, fx)
+        @testset "$(typeof(Σy))" for Σy in [Σy_iso, Σy_diag, Σy_dense]
+            fx = f(x, Σy)
+            fx_naive = f_naive(x, Σy)
+
+            approx_equivalent(rng, fx, fx_naive)
+            y = rand(rng, fx)
+            approx_equivalent(rng, posterior(fx, y)(x, Σy), posterior(fx_naive, y)(x, Σy))
+
+            # Ensure self-consistency.
+            test_finitegp_primary_and_secondary_public_interface(rng, fx)
+        end
 
         # Mix of by-features and by-outputs should also work.
         x′ = MOInputIsotopicByOutputs(collect(range(0.0, 3.0; length=4)), 2)
