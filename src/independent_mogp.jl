@@ -144,7 +144,7 @@ function reorder_by_outputs(Σy::Diagonal{<:Real}, x::MOInputIsotopicByFeatures)
     return Diagonal(Σy.diag[indices_which_reorder_features_to_outputs(x)])
 end
 
-reorder_by_outputs(Σy::Diagonal{<:Real, <:Fill}, x::MOInputIsotopicByFeatures) = Σy
+reorder_by_outputs(Σy::Diagonal{<:Real,<:Fill}, x::MOInputIsotopicByFeatures) = Σy
 
 function reorder_by_outputs(
     fx::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures,<:Diagonal{<:Real}}
