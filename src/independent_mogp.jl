@@ -140,9 +140,16 @@ end
 
 reorder_by_outputs(x::MOInputIsotopicByFeatures) = MOInputIsotopicByOutputs(x.x, x.out_dim)
 
-# We know that the observation noise covariance is constant-diagonal, so no need to reorder.
-function reorder_by_outputs(fx::IsotropicByFeaturesFiniteIndependentMOGP)
-    return FiniteGP(fx.f, reorder_by_outputs(fx.x), fx.Σy)
+function reorder_by_outputs(Σy::Diagonal{<:Real}, x::MOInputIsotopicByFeatures)
+    return Diagonal(Σy.diag[indices_which_reorder_features_to_outputs(x)])
+end
+
+reorder_by_outputs(Σy::Diagonal{<:Real,<:Fill}, x::MOInputIsotopicByFeatures) = Σy
+
+function reorder_by_outputs(
+    fx::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures,<:Diagonal{<:Real}}
+)
+    return FiniteGP(fx.f, reorder_by_outputs(fx.x), reorder_by_outputs(fx.Σy, fx.x))
 end
 
 @non_differentiable indices_which_reorder_features_to_outputs(::Any)
@@ -206,7 +213,8 @@ function AbstractGPs.rand(rng::AbstractRNG, ft::IsotropicByFeaturesFiniteIndepen
 end
 
 function AbstractGPs.logpdf(
-    ft::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures}, y::AbstractVector{<:Real}
+    ft::FiniteGP{<:IndependentMOGP,<:MOInputIsotopicByFeatures,<:Diagonal{<:Real}},
+    y::AbstractVector{<:Real},
 )
     return logpdf(
         reorder_by_outputs(ft), y[indices_which_reorder_features_to_outputs(ft.x)]
