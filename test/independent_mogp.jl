@@ -70,7 +70,7 @@
             A = randn(rng, length(x_train_mo), length(x_train_mo))
             Σy = A'A + I
             test_finitegp_primary_and_secondary_public_interface(rng, f(x_train_mo, Σy))
-            test_internal_abstractgps_interface(rng, f, x_train_mo, x_test_mo)
+            test_internal_abstractgps_interface(rng, f, x_train_mo, x_test_mo; jitter=1e-15)
         end
     end
     @testset "MOInputIsotopicByFeatures" begin
@@ -108,8 +108,8 @@
 
         # Mix of by-features and by-outputs should also work.
         x′ = MOInputIsotopicByOutputs(collect(range(0.0, 3.0; length=4)), 2)
-        test_internal_abstractgps_interface(rng, f, x, x′)
-        test_internal_abstractgps_interface(rng, f, x′, x)
+        test_internal_abstractgps_interface(rng, f, x, x′; jitter=1e-15)
+        test_internal_abstractgps_interface(rng, f, x′, x; jitter=1e-15)
 
         # Check that the covariance is computed correctly.
         @test cov(f, x, x′) ≈ cov(f_naive, x, x′)
