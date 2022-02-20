@@ -31,32 +31,32 @@ include("test_utils.jl")
 
 @testset "LinearMixingModels.jl" begin
     include("independent_mogp.jl")
-    # include("orthogonal_matrix.jl")
-    # include("ilmm.jl")
-    # include("oilmm.jl")
+    include("orthogonal_matrix.jl")
+    include("ilmm.jl")
+    include("oilmm.jl")
 
-    # @testset "doctests" begin
-    #     DocMeta.setdocmeta!(
-    #         LinearMixingModels,
-    #         :DocTestSetup,
-    #         quote
-    #             using AbstractGPs
-    #             using KernelFunctions
-    #             using LinearMixingModels
-    #             using Random
-    #             using LinearAlgebra
-    #             using FillArrays
-    #         end;
-    #         recursive=true,
-    #     )
-    #     doctest(
-    #         LinearMixingModels;
-    #         doctestfilters=[
-    #             r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
-    #             r"(Array{[a-zA-Z0-9]+,\s?1}|\s?Vector{[a-zA-Z0-9]+})",
-    #             r"(Array{[a-zA-Z0-9]+,\s?2}|\s?Matrix{[a-zA-Z0-9]+})",
-    #         ],
-    #     )
-    # end
-    # @info "Ran doctests."
+    @testset "doctests" begin
+        DocMeta.setdocmeta!(
+            LinearMixingModels,
+            :DocTestSetup,
+            quote
+                using AbstractGPs
+                using KernelFunctions
+                using LinearMixingModels
+                using Random
+                using LinearAlgebra
+                using FillArrays
+            end;
+            recursive=true,
+        )
+        doctest(
+            LinearMixingModels;
+            doctestfilters=[
+                r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
+                r"(Array{[a-zA-Z0-9]+,\s?1}|\s?Vector{[a-zA-Z0-9]+})",
+                r"(Array{[a-zA-Z0-9]+,\s?2}|\s?Matrix{[a-zA-Z0-9]+})",
+            ],
+        )
+    end
+    @info "Ran doctests."
 end
