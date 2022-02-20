@@ -132,10 +132,16 @@ const IsotropicByFeaturesFiniteIndependentMOGP = FiniteGP{
 }
 
 # Indices which, when applied to a vector ordered by features, will order it by outputs.
-function indices_which_reorder_features_to_outputs(
+function indices_which_reorder_outputs_to_features(
     x::Union{MOInputIsotopicByOutputs,MOInputIsotopicByFeatures}
 )
     return collect(vec(reshape(1:length(x), length(x.x), x.out_dim)'))
+end
+
+function indices_which_reorder_features_to_outputs(
+    x::Union{MOInputIsotopicByOutputs,MOInputIsotopicByFeatures}
+)
+    return collect(vec(reshape(1:length(x), x.out_dim, length(x.x))'))
 end
 
 reorder_by_outputs(x::MOInputIsotopicByFeatures) = MOInputIsotopicByOutputs(x.x, x.out_dim)
@@ -152,6 +158,7 @@ function reorder_by_outputs(
     return FiniteGP(fx.f, reorder_by_outputs(fx.x), reorder_by_outputs(fx.Σy, fx.x))
 end
 
+@non_differentiable indices_which_reorder_outputs_to_features(::Any)
 @non_differentiable indices_which_reorder_features_to_outputs(::Any)
 @non_differentiable reorder_by_outputs(::Any)
 
@@ -162,19 +169,19 @@ end
 function AbstractGPs.mean(f::IndependentMOGP, x::MOInputIsotopicByFeatures)
     x_by_outputs = reorder_by_outputs(x)
     mean_by_outputs = mean(f, x_by_outputs)
-    return mean_by_outputs[indices_which_reorder_features_to_outputs(x_by_outputs)]
+    return mean_by_outputs[indices_which_reorder_outputs_to_features(x_by_outputs)]
 end
 
 function AbstractGPs.var(f::IndependentMOGP, x::MOInputIsotopicByFeatures)
     x_by_outputs = reorder_by_outputs(x)
     var_by_outputs = var(f, x_by_outputs)
-    return var_by_outputs[indices_which_reorder_features_to_outputs(x_by_outputs)]
+    return var_by_outputs[indices_which_reorder_outputs_to_features(x_by_outputs)]
 end
 
 function AbstractGPs.cov(f::IndependentMOGP, x::MOInputIsotopicByFeatures)
     x_by_outputs = reorder_by_outputs(x)
     C_by_outputs = cov(f, x_by_outputs)
-    idx = indices_which_reorder_features_to_outputs(x_by_outputs)
+    idx = indices_which_reorder_outputs_to_features(x_by_outputs)
     return C_by_outputs[idx, idx]
 end
 
@@ -184,8 +191,8 @@ function AbstractGPs.cov(
     x_by_outputs = reorder_by_outputs(x)
     y_by_outputs = reorder_by_outputs(y)
     C_by_outputs = cov(f, x_by_outputs, y_by_outputs)
-    idx_x = indices_which_reorder_features_to_outputs(x_by_outputs)
-    idx_y = indices_which_reorder_features_to_outputs(y_by_outputs)
+    idx_x = indices_which_reorder_outputs_to_features(x_by_outputs)
+    idx_y = indices_which_reorder_outputs_to_features(y_by_outputs)
     return C_by_outputs[idx_x, idx_y]
 end
 
@@ -194,7 +201,7 @@ function AbstractGPs.cov(
 )
     x_by_outputs = reorder_by_outputs(x)
     C_by_outputs = cov(f, x_by_outputs, y)
-    idx_x = indices_which_reorder_features_to_outputs(x_by_outputs)
+    idx_x = indices_which_reorder_outputs_to_features(x_by_outputs)
     return C_by_outputs[idx_x, :]
 end
 
@@ -203,7 +210,7 @@ function AbstractGPs.cov(
 )
     y_by_outputs = reorder_by_outputs(y)
     C_by_outputs = cov(f, x, y_by_outputs)
-    idx_y = indices_which_reorder_features_to_outputs(y_by_outputs)
+    idx_y = indices_which_reorder_outputs_to_features(y_by_outputs)
     return C_by_outputs[:, idx_y]
 end
 
