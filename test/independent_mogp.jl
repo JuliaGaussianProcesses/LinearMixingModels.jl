@@ -76,11 +76,34 @@
     @testset "MOInputIsotopicByFeatures" begin
 
         # Inputs are isotopic and grouped by feature.
-        x = MOInputIsotopicByFeatures(collect(range(0.0, 2.0; length=2)), 2)
+        x = MOInputIsotopicByFeatures(collect(range(0.0, 2.0; length=3)), 2)
+
+        @testset "indices for reordering" begin
+
+            # Specific case where we know the answer.
+            v_by_output = [1, 1, 1, 2, 2, 2]
+            v_by_features = [1, 2, 1, 2, 1, 2]
+            inds_outputs_to_features = indices_which_reorder_outputs_to_features(x)
+            inds_features_to_outputs = indices_which_reorder_features_to_outputs(x)
+            @test v_by_output[inds_outputs_to_features] == v_by_features
+            @test v_by_features[inds_features_to_outputs] == v_by_output
+            @test ==(
+                v_by_output[inds_outputs_to_features][inds_features_to_outputs], v_by_output
+            )
+            @test ==(
+                v_by_features[inds_features_to_outputs][inds_outputs_to_features],
+                v_by_features,
+            )
+
+            # In the context of actual data.
+            x_by_outputs = MOInputIsotopicByOutputs(x.x, 2)
+            @test collect(x)[inds_features_to_outputs] == collect(x_by_outputs)
+            @test collect(x_by_outputs)[inds_outputs_to_features] == collect(x)
+        end
 
         # Build a test case.
         rng = MersenneTwister(123456)
-        kernels = [SEKernel(), 0.5 * LinearKernel()]
+        kernels = [SEKernel(), 0.5 * SEKernel()]
         f = IndependentMOGP(map(GP, kernels))
 
         # Build an equivalent naive version of the GP and compare against it.
