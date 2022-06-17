@@ -14,6 +14,7 @@ using AbstractGPs: AbstractGP, FiniteGP
 using KernelFunctions: MOInputIsotopicByOutputs, MOInputIsotopicByFeatures
 
 include("independent_mogp.jl")
+include("iid_mogp.jl")
 include("orthogonal_matrix.jl")
 include("ilmm.jl")
 include("oilmm.jl")
