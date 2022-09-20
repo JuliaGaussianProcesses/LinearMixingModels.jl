@@ -53,7 +53,9 @@
         @test isapprox(
             logpdf(post_fx, y_test), logpdf(post_fx1, y_1_test) + logpdf(post_fx2, y_2_test)
         )
-        @test marginals(post_fx) == vcat(marginals(post_fx1), marginals(post_fx2))
+        @test all(
+            isapprox.(marginals(post_fx), vcat(marginals(post_fx1), marginals(post_fx2)))
+        )
         @test isapprox(mean(post_fx), vcat(mean(post_fx1), mean(post_fx2)))
         @test isapprox(var(post_fx), vcat(var(post_fx1), var(post_fx2)))
         @test length(rand(rng, post_fx)) == length(f.fs) * length(x_test_mo.x)
